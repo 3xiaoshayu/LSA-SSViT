@@ -9,6 +9,15 @@ A DINOv3 ViT-B/16 backbone at 1024 × 1024 resolution jointly predicts a BI-RADS
 
 GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
 
+## Contents
+
+* `core.py`, `train.py`, `evaluate.py`, `metrics.py` — model, training and evaluation
+* `scripts/` — preprocessing, the tables of the paper, and the scripts that redraw the figures
+* `comparators/` — the networks of the whole-model comparison
+* `splits/vindr/` — the exam-level split used in the paper
+* `results/` — the released predictions, metrics and tables
+
+Trained weights are not in this repository (`checkpoints/` is listed in `.gitignore`). The figures of the paper are not stored here either; `scripts/plot_figures.py` and `scripts/plot_heatmaps.py` redraw them from `results/`.
 
 ## Results
 
@@ -51,9 +60,9 @@ results/heatmaps/        lesion masks of the test split and the heat-map results
 results/comparators/<model>/  per-image test predictions and training records of the comparator networks
 results/comparators/comparison_tables.md  the whole-model comparison table (comparators/summarize.py)
 results/summary.json     every number of results/paper_tables.md and of the ROC, forest and confusion-matrix figures
-figures/                 figures (PDF and PNG)
-paper/                   figure legends and table notes (captions.md) and all figures and tables of the paper in one PDF
 ```
+
+`figures/` and `paper/` are not part of this repository. The plotting scripts write `figures/` locally, and the figure legends are in the paper.
 
 The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `grain`, `cusp` and `LSA-SSViT` in file and folder names.
 
@@ -216,9 +225,17 @@ python scripts/plot_heatmaps.py --cache-root outputs/cache/vindr_1024 \
 - The backbone keeps the default training-mode behaviour of the Hugging Face DINOv3 implementation.
 - Scores are not recalibrated: the class-balanced loss shifts probabilities upwards, so thresholds are always taken from the validation split.
 
+## Citation
+
+If you use this code or the released results, please cite the paper and this repository:
+
+> Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening.
+
+https://github.com/3xiaoshayu/LSA-SSViT
+
 ## License
 
-The code is released under the MIT License (see `LICENSE`). The DINOv3 weights contained in the checkpoints are subject to the [DINOv3 License](https://ai.meta.com/resources/models-and-libraries/dinov3-license/). VinDr-Mammo and INbreast are subject to their own data use agreements. This repository contains no image data. The only exceptions are the cropped example images in the heat-map figures, and the rasterized VinDr-Mammo lesion annotations of the test split in `results/heatmaps/lesion_masks_test.npz`.
+The code is released under the MIT License (see `LICENSE`). The DINOv3 weights, which are not included here, are subject to the [DINOv3 License](https://ai.meta.com/resources/models-and-libraries/dinov3-license/). VinDr-Mammo and INbreast are subject to their own data use agreements. This repository contains no mammogram images. The only image-derived file is the rasterized VinDr-Mammo lesion annotations of the test split, in `results/heatmaps/lesion_masks_test.npz`.
 
 ## Acknowledgements
 
