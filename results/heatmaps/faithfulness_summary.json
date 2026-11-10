@@ -1,0 +1,28 @@
+{
+  "deletion_auc_calcification": {
+    "baseline/cam": 0.8573,
+    "baseline/random": 0.8601,
+    "cusp/cam": 0.7981,
+    "cusp/random": 0.886,
+    "grain/cam": 0.5914,
+    "grain/random": 0.8656,
+    "LSA-SSViT/cam": 0.5096,
+    "LSA-SSViT/random": 0.8677
+  },
+  "randomization_abs_spearman": {
+    "baseline/block10": 0.7372,
+    "baseline/block11": 0.7168,
+    "baseline/block12": 0.6943,
+    "baseline/block9": 0.0356,
+    "baseline/head": 0.7499,
+    "LSA-SSViT/block10": 0.0353,
+    "LSA-SSViT/block11": 0.2284,
+    "LSA-SSViT/block12": 0.2204,
+    "LSA-SSViT/block9": -0.0608,
+    "LSA-SSViT/head": 0.2688
+  },
+  "n_images": {
+    "deletion": 40,
+    "randomization": 20
+  }
+}

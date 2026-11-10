@@ -1,0 +1,743 @@
+{
+  "protocol": {
+    "bootstrap": "percentile 95% CI; exams resampled with replacement",
+    "n_boot": 2000,
+    "seed": 2026,
+    "paired": "AUC(LSA-SSViT) - AUC(comparator) on the same resamples"
+  },
+  "models": {
+    "baseline": {
+      "title": "Baseline (DINOv3-B/16)",
+      "family": "Ours, without GRAIN and CUSP"
+    },
+    "LSA-SSViT": {
+      "title": "LSA-SSViT",
+      "family": "Ours"
+    },
+    "resnet50": {
+      "title": "ResNet-50",
+      "family": "CNN"
+    },
+    "efficientnet_b3": {
+      "title": "EfficientNet-B3",
+      "family": "CNN"
+    },
+    "convnext_tiny": {
+      "title": "ConvNeXt-T",
+      "family": "CNN"
+    },
+    "mobilenetv4_conv_medium": {
+      "title": "MobileNetV4-Conv-M",
+      "family": "CNN"
+    },
+    "rope_vit_base": {
+      "title": "RoPE-ViT-B/16",
+      "family": "Transformer"
+    },
+    "mambavision_tiny": {
+      "title": "MambaVision-T",
+      "family": "Hybrid"
+    },
+    "dinov2_base": {
+      "title": "DINOv2-B/14",
+      "family": "Foundation model"
+    },
+    "rad_dino": {
+      "title": "RAD-DINO",
+      "family": "Medical foundation model"
+    },
+    "mammo_clip_b2": {
+      "title": "Mammo-CLIP (EfficientNet-B2)",
+      "family": "Mammography foundation model"
+    }
+  },
+  "training": {
+    "resnet50": {
+      "stop_reason": "maximum number of epochs reached",
+      "best_epoch": 16,
+      "problems": []
+    },
+    "efficientnet_b3": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 8,
+      "problems": []
+    },
+    "convnext_tiny": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 12,
+      "problems": []
+    },
+    "mobilenetv4_conv_medium": {
+      "stop_reason": "maximum number of epochs reached",
+      "best_epoch": 19,
+      "problems": []
+    },
+    "rope_vit_base": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 13,
+      "problems": []
+    },
+    "mambavision_tiny": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 12,
+      "problems": []
+    },
+    "dinov2_base": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 14,
+      "problems": []
+    },
+    "rad_dino": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 11,
+      "problems": []
+    },
+    "mammo_clip_b2": {
+      "stop_reason": "early stopping: validation screening AUC did not improve for 6 epochs",
+      "best_epoch": 3,
+      "problems": []
+    }
+  },
+  "datasets": {
+    "vindr": {
+      "title": "VinDr-Mammo official test set",
+      "unit": "exams",
+      "image_level": {
+        "baseline": {
+          "birads": {
+            "auc": 0.8122911481379057,
+            "ci95": [
+              0.7810360654520123,
+              0.8441791875652068
+            ],
+            "ap": 0.5258937685958188,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8214697616899687,
+            "ci95": [
+              0.7826463025759414,
+              0.8570078238365282
+            ],
+            "ap": 0.2912846731445873,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9176453328443059,
+            "ci95": [
+              0.8687730224291306,
+              0.9596229173809274
+            ],
+            "ap": 0.6862698898621383,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "resnet50": {
+          "birads": {
+            "auc": 0.7898215684918879,
+            "ci95": [
+              0.7580733045624665,
+              0.821583121256007
+            ],
+            "ap": 0.49098097033238286,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.7946376921859959,
+            "ci95": [
+              0.7551006381883402,
+              0.8333437456713317
+            ],
+            "ap": 0.3593246229768491,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9287095788251116,
+            "ci95": [
+              0.8917238791060745,
+              0.9616256163130248
+            ],
+            "ap": 0.685942823691334,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "efficientnet_b3": {
+          "birads": {
+            "auc": 0.8087500288071534,
+            "ci95": [
+              0.7748782910856861,
+              0.8411446753005766
+            ],
+            "ap": 0.5309139244103057,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8110270168434095,
+            "ci95": [
+              0.7699655278664274,
+              0.8504007299099547
+            ],
+            "ap": 0.39931553821803284,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9346561525765633,
+            "ci95": [
+              0.8838060698425554,
+              0.9709549830618794
+            ],
+            "ap": 0.6833690368261388,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "convnext_tiny": {
+          "birads": {
+            "auc": 0.7972963046183629,
+            "ci95": [
+              0.766393733764795,
+              0.8281295815110075
+            ],
+            "ap": 0.47318616824883025,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8002002321146708,
+            "ci95": [
+              0.7605778460145772,
+              0.8386455384251053
+            ],
+            "ap": 0.33910142121329356,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9162882816798094,
+            "ci95": [
+              0.8812436944064305,
+              0.950927841808018
+            ],
+            "ap": 0.5178966154533696,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "mobilenetv4_conv_medium": {
+          "birads": {
+            "auc": 0.7848307291666666,
+            "ci95": [
+              0.7522338589341708,
+              0.8177799893183351
+            ],
+            "ap": 0.45851688279716524,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.810969048559307,
+            "ci95": [
+              0.7688510306487653,
+              0.8508151368098436
+            ],
+            "ap": 0.36006691951619657,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.879240784889052,
+            "ci95": [
+              0.8238410463611516,
+              0.9309379133808843
+            ],
+            "ap": 0.5194079852938148,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "rope_vit_base": {
+          "birads": {
+            "auc": 0.8253242245114307,
+            "ci95": [
+              0.7936987644844052,
+              0.8556531749431
+            ],
+            "ap": 0.5275327797971654,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8369110633677881,
+            "ci95": [
+              0.7969560013920532,
+              0.874666969023952
+            ],
+            "ap": 0.44889733303823587,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9364166513845589,
+            "ci95": [
+              0.9058415155888643,
+              0.9669757402889476
+            ],
+            "ap": 0.6832409918333039,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "mambavision_tiny": {
+          "birads": {
+            "auc": 0.8006861863938052,
+            "ci95": [
+              0.7665739214289351,
+              0.8326689282172707
+            ],
+            "ap": 0.5028449578628884,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8135655446180674,
+            "ci95": [
+              0.7694572259191564,
+              0.8521877929694383
+            ],
+            "ap": 0.37118082086043713,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9256751635185526,
+            "ci95": [
+              0.8863953454596261,
+              0.9631073688181392
+            ],
+            "ap": 0.6914849019032546,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "dinov2_base": {
+          "birads": {
+            "auc": 0.7800037305263643,
+            "ci95": [
+              0.7462805625133658,
+              0.8116920938118747
+            ],
+            "ap": 0.4088137733761843,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.7778631199738174,
+            "ci95": [
+              0.7312941711754377,
+              0.8185877760140492
+            ],
+            "ap": 0.2353814565511512,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9075346903844979,
+            "ci95": [
+              0.8618373835389391,
+              0.9485909273434454
+            ],
+            "ap": 0.37569044347163166,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "rad_dino": {
+          "birads": {
+            "auc": 0.7758760255346607,
+            "ci95": [
+              0.7451246722240202,
+              0.8067245957061799
+            ],
+            "ap": 0.4316104052858537,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.7924228206642442,
+            "ci95": [
+              0.7536590491651896,
+              0.8309685331574262
+            ],
+            "ap": 0.3536429570843817,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.8800464576074333,
+            "ci95": [
+              0.8313906073919879,
+              0.9260406536785915
+            ],
+            "ap": 0.5230779953580773,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "mammo_clip_b2": {
+          "birads": {
+            "auc": 0.8225522561762537,
+            "ci95": [
+              0.7876889493979387,
+              0.8558347146280186
+            ],
+            "ap": 0.5257705052591436,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8444475441374137,
+            "ci95": [
+              0.8048005390821797,
+              0.8808808657418292
+            ],
+            "ap": 0.41923464416203576,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9155253988630112,
+            "ci95": [
+              0.8684213882626753,
+              0.957593802926491
+            ],
+            "ap": 0.6294461503759674,
+            "n_positive": 105,
+            "n": 4000
+          }
+        },
+        "LSA-SSViT": {
+          "birads": {
+            "auc": 0.83479169547382,
+            "ci95": [
+              0.8057558647183859,
+              0.8632268995862785
+            ],
+            "ap": 0.5484225161973129,
+            "n_positive": 384,
+            "n": 4000
+          },
+          "mass": {
+            "auc": 0.8496351017283001,
+            "ci95": [
+              0.814723352086747,
+              0.8825398825545694
+            ],
+            "ap": 0.4635450151988051,
+            "n_positive": 219,
+            "n": 4000
+          },
+          "calcification": {
+            "auc": 0.9370646127513906,
+            "ci95": [
+              0.8945104645465474,
+              0.9726388173979339
+            ],
+            "ap": 0.7227220551069685,
+            "n_positive": 105,
+            "n": 4000
+          }
+        }
+      },
+      "paired_vs_LSA-SSViT": [
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "baseline",
+          "birads": {
+            "delta_auc": 0.022500547335914334,
+            "ci95": [
+              0.006253863858467371,
+              0.0389533417967014
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.028165340038331488,
+            "ci95": [
+              0.006007487296234254,
+              0.050638184712027155
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.019419279907084697,
+            "ci95": [
+              0.0008582454372092402,
+              0.04010689657433188
+            ],
+            "significant": true
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "resnet50",
+          "birads": {
+            "delta_auc": 0.044970126981932146,
+            "ci95": [
+              0.020794339905506547,
+              0.06916662085611842
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.054997409542304254,
+            "ci95": [
+              0.024446332813290728,
+              0.08685175891430202
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.00835503392627901,
+            "ci95": [
+              -0.023127855203340857,
+              0.03832940947413284
+            ],
+            "significant": false
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "efficientnet_b3",
+          "birads": {
+            "delta_auc": 0.02604166666666663,
+            "ci95": [
+              0.001286861191956079,
+              0.05010753186522543
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.03860808488489065,
+            "ci95": [
+              0.013326086008421504,
+              0.06514823949230764
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.0024084601748273204,
+            "ci95": [
+              -0.020790905254671747,
+              0.024132580357419983
+            ],
+            "significant": false
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "convnext_tiny",
+          "birads": {
+            "delta_auc": 0.03749539085545717,
+            "ci95": [
+              0.016663215800253737,
+              0.05744594397469594
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.049434869613629306,
+            "ci95": [
+              0.02791953420260212,
+              0.07218017177955535
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.020776331071581278,
+            "ci95": [
+              -0.009854335033956954,
+              0.04707937931685519
+            ],
+            "significant": false
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "mobilenetv4_conv_medium",
+          "birads": {
+            "delta_auc": 0.04996096630715341,
+            "ci95": [
+              0.02566382906042764,
+              0.07404046033023941
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.038666053168993186,
+            "ci95": [
+              0.010403061824792814,
+              0.06839917104203456
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.05782382786233864,
+            "ci95": [
+              0.01951215321222725,
+              0.10163275053761092
+            ],
+            "significant": true
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "rope_vit_base",
+          "birads": {
+            "delta_auc": 0.009467470962389313,
+            "ci95": [
+              -0.011480128563919742,
+              0.030844695313217943
+            ],
+            "significant": false
+          },
+          "mass": {
+            "delta_auc": 0.012724038360512058,
+            "ci95": [
+              -0.013475617638666212,
+              0.04077926851119315
+            ],
+            "significant": false
+          },
+          "calcification": {
+            "delta_auc": 0.0006479613668317619,
+            "ci95": [
+              -0.02680650299317067,
+              0.021303088737591555
+            ],
+            "significant": false
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "mambavision_tiny",
+          "birads": {
+            "delta_auc": 0.03410550908001486,
+            "ci95": [
+              0.011298900119015565,
+              0.05824379549745157
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.03606955711023274,
+            "ci95": [
+              0.0060989380667291265,
+              0.06624727749703664
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.011389449232838023,
+            "ci95": [
+              -0.015622447820942882,
+              0.034604953442589556
+            ],
+            "significant": false
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "dinov2_base",
+          "birads": {
+            "delta_auc": 0.05478796494745575,
+            "ci95": [
+              0.03050129801736967,
+              0.08074498160650767
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.07177198175448274,
+            "ci95": [
+              0.039850755194698634,
+              0.10768801960458471
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.02952992236689278,
+            "ci95": [
+              -0.0034525991947788265,
+              0.0646072372209058
+            ],
+            "significant": false
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "rad_dino",
+          "birads": {
+            "delta_auc": 0.05891566993915931,
+            "ci95": [
+              0.03479118226177418,
+              0.08365979270892586
+            ],
+            "significant": true
+          },
+          "mass": {
+            "delta_auc": 0.05721228106405596,
+            "ci95": [
+              0.028328239089143246,
+              0.08664718711448467
+            ],
+            "significant": true
+          },
+          "calcification": {
+            "delta_auc": 0.05701815514395736,
+            "ci95": [
+              0.021066434184745207,
+              0.09795523853621015
+            ],
+            "significant": true
+          }
+        },
+        {
+          "candidate": "LSA-SSViT",
+          "reference": "mammo_clip_b2",
+          "birads": {
+            "delta_auc": 0.012239439297566324,
+            "ci95": [
+              -0.007745118284200416,
+              0.03297574268064418
+            ],
+            "significant": false
+          },
+          "mass": {
+            "delta_auc": 0.005187557590886405,
+            "ci95": [
+              -0.018138967959934468,
+              0.0322539168680158
+            ],
+            "significant": false
+          },
+          "calcification": {
+            "delta_auc": 0.021539213888379427,
+            "ci95": [
+              -0.0027560777977078343,
+              0.04803151054030335
+            ],
+            "significant": false
+          }
+        }
+      ]
+    }
+  }
+}

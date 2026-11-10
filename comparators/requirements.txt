@@ -1,0 +1,7 @@
+# In addition to ../requirements.txt
+timm>=1.0.27                 # timm comparators (MobileNetV4 and RoPE-ViT weights)
+huggingface_hub>=0.24        # downloads of the pretrained weights
+efficientnet_pytorch==0.7.1  # Mammo-CLIP image encoder
+omegaconf>=2.3               # reads the configuration stored in the Mammo-CLIP checkpoint
+einops>=0.7                  # MambaVision
+mamba-ssm>=2.2               # MambaVision (CUDA extension; prebuilt wheels on the state-spaces/mamba releases page)

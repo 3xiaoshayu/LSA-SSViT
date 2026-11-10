@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+.DS_Store
+
+# data, caches, training runs and weights stay outside git
+dataset/
+outputs/
+checkpoints/

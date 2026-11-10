@@ -1,0 +1,24 @@
+{
+  "baseline": {
+    "n_images": 16,
+    "pearson_r_min": 0.9999999291247945,
+    "pearson_r_mean": 0.9999999971567064,
+    "scale_mean": 0.00024414062458493683,
+    "scale_min": 0.00024414059974068626,
+    "scale_max": 0.00024414063738924414,
+    "scale_expected": 0.000244140625,
+    "max_relative_residual": 2.038094249112097e-06,
+    "max_abs_logit_difference": 0.0
+  },
+  "LSA-SSViT": {
+    "n_images": 16,
+    "pearson_r_min": 0.9999999985943284,
+    "pearson_r_mean": 0.9999999997269197,
+    "scale_mean": 0.0002441406240630173,
+    "scale_min": 0.00024414058699666731,
+    "scale_max": 0.0002441406562220827,
+    "scale_expected": 0.000244140625,
+    "max_relative_residual": 1.804688924084876e-06,
+    "max_abs_logit_difference": 0.0
+  }
+}
