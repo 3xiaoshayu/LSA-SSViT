@@ -4,7 +4,14 @@ __pycache__/
 .venv/
 .DS_Store
 
-# data, caches, training runs and weights stay outside git
+# data, caches, training runs, generated figures and weights stay outside git
 dataset/
 outputs/
 checkpoints/
+figures/
+*.pt
+*.pth
+*.ckpt
+
+.idea/
+Thumbs.db

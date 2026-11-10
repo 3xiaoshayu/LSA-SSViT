@@ -2,12 +2,9 @@
 
 This repository is the official implementation of **Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening**.
 
-A DINOv3 ViT-B/16 backbone at 1024 × 1024 resolution jointly predicts a BI-RADS-based screening decision (BI-RADS 3–5 vs 1–2), the presence of a mass and the presence of suspicious calcifications. LSA-SSViT adapts this backbone with two components:
+LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method) and [CUSP](#method). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
 
-- **GRAIN** (Gated Residual Aggregation of Inter-token Neighborhoods) follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
-- **CUSP** (Clinically-guided, Uncertainty-weighted Supervision with Profile consistency) adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
-
-GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
+The repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables. It does not contain mammograms, the figures of the paper, or trained weights.
 
 ## Requirements
 
@@ -68,9 +65,10 @@ The script writes `metrics_test.json` (image-, breast- and exam-level metrics, s
 
 ```bash
 python scripts/prepare_inbreast.py --xls /path/to/INbreast.xls --dicom-dir /path/to/AllDICOMs
-python scripts/evaluate_inbreast.py --image-root /path/to/AllDICOMs
-python scripts/paper_tables.py     # adds the INbreast table
+python scripts/evaluate_inbreast.py --image-root /path/to/AllDICOMs --output-root outputs/inbreast
 ```
+
+The predictions released with the paper are already in `results/inbreast/`, and `python scripts/paper_tables.py` reads those. The command above writes a new run to `outputs/inbreast/` and does not replace them.
 
 The VinDr-trained checkpoints are applied without fine-tuning or recalibration. The screening label follows the same BI-RADS rule (first digit ≥ 3, including 4a–4c and 6); the INbreast mass and microcalcification annotations include benign findings. Confidence intervals resample patients.
 
@@ -98,37 +96,44 @@ Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level; 95% co
 
 All tables of the paper, including the paired significance tests, operating points, exam-level results and the external test on INbreast without fine-tuning, are in [`results/paper_tables.md`](results/paper_tables.md), and the whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
 
+## Method
+
+- **GRAIN** (Gated Residual Aggregation of Inter-token Neighborhoods) follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
+- **CUSP** (Clinically-guided, Uncertainty-weighted Supervision with Profile consistency) adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
+
+GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
+
 ## Repository layout
 
 ```
-core.py                  preprocessing, cache, dataset, model (DINOv3 + GRAIN), CUSP loss
-metrics.py               label definitions, metrics, bootstrap (NumPy / pandas / scikit-learn only)
-train.py                 training of the four models
-evaluate.py              evaluation of a checkpoint (thresholds chosen on the validation split)
-scripts/build_cache.py         preprocessing cache for VinDr-Mammo
-scripts/paper_tables.py        all tables of the paper from the released predictions
-scripts/plot_figures.py        result figures of the paper
-scripts/prepare_inbreast.py    INbreast manifest
-scripts/evaluate_inbreast.py   external test on INbreast (no fine-tuning)
-scripts/model_complexity.py    parameters and MACs with and without GRAIN
-scripts/heatmaps.py            class activation maps and Grad-CAM, weakly supervised localization, faithfulness checks
-scripts/plot_heatmaps.py       heat-map figures of the paper
-scripts/figure_style.py        shared figure style (type scale, colours, panel letters, export)
-comparators/zoo.py               comparator networks of the whole-model comparison
-comparators/train_comparator.py  re-training and evaluation of a comparator with the protocol of train.py
-comparators/prepare_weights.py   download of the comparators' pretrained weights
-comparators/summarize.py         whole-model comparison table from the comparator predictions
-splits/vindr/            exam-level split of VinDr-Mammo used in the paper
-checkpoints/<model>/     trained weights of the four models (best.pt; not tracked by git)
-results/vindr/<model>/   per-image test predictions and metrics of the four released models
-results/inbreast/<model>/  per-image predictions on INbreast (no fine-tuning)
-results/heatmaps/        lesion masks of the test split and the heat-map results (localization, faithfulness, Grad-CAM check)
-results/comparators/<model>/  per-image test predictions and training records of the comparator networks
-results/comparators/comparison_tables.md  the whole-model comparison table (comparators/summarize.py)
-results/summary.json     every number of results/paper_tables.md and of the ROC, forest and confusion-matrix figures
-requirements.txt         Python dependencies
-SHA256SUMS.txt           checksums of the released result files and of the four checkpoints
-LICENSE                  MIT License
+core.py                                   preprocessing, cache, dataset, model (DINOv3 + GRAIN), CUSP loss
+metrics.py                                label definitions, metrics, bootstrap (NumPy / pandas / scikit-learn only)
+train.py                                  training of the four models
+evaluate.py                               evaluation of a checkpoint (thresholds chosen on the validation split)
+scripts/build_cache.py                    preprocessing cache for VinDr-Mammo
+scripts/paper_tables.py                   all tables of the paper from the released predictions
+scripts/plot_figures.py                   result figures of the paper
+scripts/prepare_inbreast.py               INbreast manifest
+scripts/evaluate_inbreast.py              external test on INbreast (no fine-tuning)
+scripts/model_complexity.py               parameters and MACs with and without GRAIN
+scripts/heatmaps.py                       class activation maps, Grad-CAM, localization, faithfulness
+scripts/plot_heatmaps.py                  heat-map figures of the paper
+scripts/figure_style.py                   shared figure style
+comparators/zoo.py                        comparator networks of the whole-model comparison
+comparators/train_comparator.py           re-training and evaluation of a comparator
+comparators/prepare_weights.py            download of the comparators' pretrained weights
+comparators/summarize.py                  whole-model comparison table
+splits/vindr/                             exam-level split of VinDr-Mammo used in the paper
+checkpoints/<model>/                      trained weights (best.pt; not tracked by git)
+results/vindr/<model>/                    per-image test predictions and metrics
+results/inbreast/<model>/                 per-image predictions on INbreast (no fine-tuning)
+results/heatmaps/                         lesion masks and heat-map results
+results/comparators/<model>/              comparator predictions and training records
+results/comparators/comparison_tables.md  whole-model comparison table
+results/summary.json                      numbers behind the tables and result figures
+requirements.txt                          Python dependencies
+SHA256SUMS.txt                            checksums of released results and of the four checkpoints
+LICENSE                                   MIT License
 ```
 
 `figures/` and `paper/` are not part of this repository. The plotting scripts write `figures/` locally, and the figure legends are in the paper.
@@ -243,6 +248,8 @@ If you use this code or the released results, please cite the paper and this rep
 > Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening.
 
 https://github.com/3xiaoshayu/LSA-SSViT
+
+The BibTeX entry will be added when the preprint is public.
 
 ## License
 
