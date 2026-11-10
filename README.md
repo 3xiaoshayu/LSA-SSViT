@@ -1,5 +1,8 @@
 <p align="center">
-  <img src="assets/readme_header.png" alt="LSA-SSViT. VinDr-Mammo official test, image level: screening AUC 0.8348, mass AUC 0.8496, calcification AUC 0.9371." width="880">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/readme_header_dark.png">
+    <img src="assets/readme_header.png" alt="LSA-SSViT. VinDr-Mammo official test, image level: screening AUC 0.8348, mass AUC 0.8496, calcification AUC 0.9371." width="880">
+  </picture>
 </p>
 
 This repository is the official implementation of **Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening**.
@@ -130,9 +133,13 @@ All tables of the paper, including the paired significance tests, operating poin
 
 ## Method
 
-**GRAIN** (Gated Residual Aggregation of Inter-token Neighborhoods) follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
+### GRAIN
 
-**CUSP** (Clinically-guided, Uncertainty-weighted Supervision with Profile consistency) adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
+Gated Residual Aggregation of Inter-token Neighborhoods follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
+
+### CUSP
+
+Clinically-guided, Uncertainty-weighted Supervision with Profile consistency adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
 
 GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
 
@@ -151,7 +158,7 @@ The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `
 | `requirements.txt` | Python dependencies |
 | `SHA256SUMS.txt` | checksums of released results and of the four checkpoints |
 | `LICENSE` | MIT License |
-| `assets/readme_header.png` | header of this page |
+| `assets/readme_header.png` | header of this page; `readme_header_dark.png` is the dark-mode version |
 
 ### Scripts
 
