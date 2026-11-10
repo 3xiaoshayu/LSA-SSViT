@@ -2,14 +2,7 @@
   <img src="assets/readme_header.png" alt="LSA-SSViT. VinDr-Mammo official test, image level: screening AUC 0.8348, mass AUC 0.8496, calcification AUC 0.9371." width="880">
 </p>
 
-<p align="center">
-  <code>MIT</code> &nbsp;&nbsp; <code>Python 3.10+</code> &nbsp;&nbsp; <code>PyTorch 2.3+</code>
-</p>
-
-<p align="center">
-  Official implementation of<br>
-  <b>Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening</b>
-</p>
+This repository is the official implementation of **Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening**.
 
 LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method) and [CUSP](#method). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
 
@@ -55,7 +48,7 @@ python train.py --cache-root outputs/cache/vindr_1024 --experiment-name LSA-SSVi
 
 `--image-root` is the folder that contains one sub-folder per exam (`<study_id>/<image_id>.dicom`). What the cache contains is described in [Preprocessing](#preprocessing). `train.py` and `evaluate.py` can also preprocess on the fly with `--image-root`, which differs from the cache only by the uint16 rounding (about 7.6e-6 per pixel).
 
-| | Setting used in the paper |
+| Setting | Value used in the paper |
 | --- | --- |
 | Optimizer | AdamW, weight decay 1e-4 |
 | Learning rate | 2e-4 for the classifier and GRAIN; 1e-4 for the last four backbone blocks and the final LayerNorm. The rest of the backbone is frozen. |
@@ -147,6 +140,8 @@ GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) an
 
 The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `grain`, `cusp` and `LSA-SSViT` in file and folder names. `figures/` and `paper/` are not part of this repository. The plotting scripts write `figures/` locally, and the figure legends are in the paper.
 
+### Code
+
 | Path | Contents |
 | --- | --- |
 | `core.py` | preprocessing, cache, dataset, model (DINOv3 + GRAIN), CUSP loss |
@@ -157,6 +152,8 @@ The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `
 | `SHA256SUMS.txt` | checksums of released results and of the four checkpoints |
 | `LICENSE` | MIT License |
 | `assets/readme_header.png` | header of this page |
+
+### Scripts
 
 | Path | Contents |
 | --- | --- |
@@ -173,6 +170,8 @@ The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `
 | `comparators/train_comparator.py` | re-training and evaluation of a comparator |
 | `comparators/prepare_weights.py` | download of the comparators' pretrained weights |
 | `comparators/summarize.py` | whole-model comparison table |
+
+### Released files
 
 | Path | Contents |
 | --- | --- |
