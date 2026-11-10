@@ -1,10 +1,30 @@
-# LSA-SSViT
+<p align="center">
+  <img src="assets/readme_header.png" alt="LSA-SSViT. VinDr-Mammo official test, image level: screening AUC 0.8348, mass AUC 0.8496, calcification AUC 0.9371." width="880">
+</p>
 
-This repository is the official implementation of **Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening**.
+<p align="center">
+  <code>MIT</code> &nbsp;&nbsp; <code>Python 3.10+</code> &nbsp;&nbsp; <code>PyTorch 2.3+</code>
+</p>
+
+<p align="center">
+  Official implementation of<br>
+  <b>Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening</b>
+</p>
 
 LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method) and [CUSP](#method). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
 
-The repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables. It does not contain mammograms, the figures of the paper, or trained weights.
+> [!NOTE]
+> This repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables. It does not contain mammograms, the figures of the paper, or trained weights.
+
+<p align="center">
+  <a href="#requirements">Requirements</a> &nbsp;·&nbsp;
+  <a href="#training">Training</a> &nbsp;·&nbsp;
+  <a href="#evaluation">Evaluation</a> &nbsp;·&nbsp;
+  <a href="#pre-trained-models">Pre-trained models</a> &nbsp;·&nbsp;
+  <a href="#results">Results</a> &nbsp;·&nbsp;
+  <a href="#method">Method</a> &nbsp;·&nbsp;
+  <a href="#data">Data</a>
+</p>
 
 ## Requirements
 
@@ -35,13 +55,27 @@ python train.py --cache-root outputs/cache/vindr_1024 --experiment-name LSA-SSVi
 
 `--image-root` is the folder that contains one sub-folder per exam (`<study_id>/<image_id>.dicom`). What the cache contains is described in [Preprocessing](#preprocessing). `train.py` and `evaluate.py` can also preprocess on the fly with `--image-root`, which differs from the cache only by the uint16 rounding (about 7.6e-6 per pixel).
 
-The defaults are the settings of the paper: seed 2026; AdamW with weight decay 1e-4; learning rate 2e-4 for the classifier and GRAIN and 1e-4 for the last four backbone blocks and the final LayerNorm (the rest of the backbone is frozen); batch size 8; at most 20 epochs with cosine decay; early stopping with a patience of 6 epochs on the validation screening AUC; dropout 0.25 before the classifier; positive class weights equal to the negative-to-positive ratio of the training split, capped at 20; horizontal flipping, random affine transforms (scale 0.9–1.1, rotation ±10°, translation ±5%) and contrast/brightness jitter. Training uses mixed precision; for numerical stability, the four GRAIN-equipped blocks are computed in FP32. A GPU with at least 24 GB of memory is needed.
+| | Setting used in the paper |
+| --- | --- |
+| Optimizer | AdamW, weight decay 1e-4 |
+| Learning rate | 2e-4 for the classifier and GRAIN; 1e-4 for the last four backbone blocks and the final LayerNorm. The rest of the backbone is frozen. |
+| Batch size | 8 |
+| Schedule | at most 20 epochs, cosine decay |
+| Early stopping | patience of 6 epochs on the validation screening AUC |
+| Dropout | 0.25 before the classifier |
+| Class weights | positive weight equal to the negative-to-positive ratio of the training split, capped at 20 |
+| Augmentation | horizontal flipping; random affine (scale 0.9–1.1, rotation ±10°, translation ±5%); contrast and brightness jitter |
+| Precision | mixed precision; the four GRAIN-equipped blocks are computed in FP32 |
+| Seed | 2026 |
+| Hardware | a GPU with at least 24 GB of memory |
 
 Each run writes `outputs/runs/<name>/best.pt` (best validation screening AUC), `last.pt` (for `--resume`), `history.csv`, `train.log`, `run.json`, and the validation and held-out predictions.
 
 ## Evaluation
 
-The table in [Results](#results) is reproduced from the released predictions, with no GPU and no checkpoint:
+### Reproduce the released tables
+
+No GPU and no checkpoint. These scripts read only the released files in `results/`.
 
 ```bash
 python scripts/paper_tables.py    # writes results/summary.json and results/paper_tables.md
@@ -50,9 +84,11 @@ python scripts/plot_heatmaps.py   # localization and faithfulness figures from r
 python comparators/summarize.py   # whole-model comparison: results/comparators/comparison_tables.md
 ```
 
-These scripts read only the released files in `results/`. The two figures of heat maps also need the images and the maps (see [Heat maps](#heat-maps)). `figures/` is written locally and is not part of this repository.
+The two figures of heat maps also need the images and the maps (see [Heat maps](#heat-maps)). `figures/` is written locally and is not part of this repository.
 
-To evaluate a checkpoint on VinDr-Mammo, run the following for each model. Thresholds are selected on the validation split with Youden's index and applied unchanged to the test split.
+### Evaluate a checkpoint
+
+Thresholds are selected on the validation split with Youden's index and applied unchanged to the test split. Run the following for each model:
 
 ```bash
 python evaluate.py --checkpoint checkpoints/LSA-SSViT/best.pt --cache-root outputs/cache/vindr_1024 \
@@ -79,66 +115,75 @@ The VinDr-trained checkpoints are applied without fine-tuning or recalibration. 
 | Baseline | `checkpoints/baseline/best.pt` |
 | +GRAIN | `checkpoints/grain/best.pt` |
 | +CUSP | `checkpoints/cusp/best.pt` |
-| LSA-SSViT | `checkpoints/LSA-SSViT/best.pt` |
+| **LSA-SSViT** | `checkpoints/LSA-SSViT/best.pt` |
 
-These four files are not in the git repository. Each one is larger than GitHub's 100 MB file limit, and each one contains the DINOv3 backbone, which is not redistributed (see [License](#license)). `SHA256SUMS.txt` records their checksums. Put a checkpoint at the path above and use the evaluation command. The same file also stores the backbone configuration, so evaluation does not download DINOv3 again.
+> [!IMPORTANT]
+> These four files are not in the git repository. Each one is larger than GitHub's 100 MB file limit, and each one contains the DINOv3 backbone, which is not redistributed (see [License](#license)). `SHA256SUMS.txt` records their checksums.
+
+Put a checkpoint at the path above and use the evaluation command. The same file also stores the backbone configuration, so evaluation does not download DINOv3 again.
 
 ## Results
 
-Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level; 95% confidence intervals from 2,000 bootstrap replicates over exams. Reproduce this table with the first command in [Evaluation](#evaluation).
+Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level. The intervals are 95% confidence intervals from 2,000 bootstrap replicates over exams. Reproduce this table with the first command in [Evaluation](#evaluation).
 
 | Model | Screening AUC | Screening AP | Mass AUC | Mass AP | Calcification AUC | Calcification AP |
 | --- | --- | ---: | --- | ---: | --- | ---: |
 | Baseline | 0.8123 (0.7810–0.8442) | 0.526 | 0.8215 (0.7826–0.8570) | 0.291 | 0.9176 (0.8688–0.9596) | 0.686 |
 | +GRAIN | 0.8331 (0.8033–0.8624) | 0.552 | 0.8442 (0.8091–0.8788) | 0.448 | 0.9272 (0.8796–0.9672) | 0.705 |
 | +CUSP | 0.8286 (0.7987–0.8583) | 0.542 | 0.8332 (0.7961–0.8677) | 0.347 | 0.9163 (0.8692–0.9577) | 0.642 |
-| LSA-SSViT | 0.8348 (0.8058–0.8632) | 0.548 | 0.8496 (0.8147–0.8825) | 0.464 | 0.9371 (0.8945–0.9726) | 0.723 |
+| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | **0.548** | **0.8496** (0.8147–0.8825) | **0.464** | **0.9371** (0.8945–0.9726) | **0.723** |
 
-All tables of the paper, including the paired significance tests, operating points, exam-level results and the external test on INbreast without fine-tuning, are in [`results/paper_tables.md`](results/paper_tables.md), and the whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
+All tables of the paper, including the paired significance tests, operating points, exam-level results and the external test on INbreast without fine-tuning, are in [`results/paper_tables.md`](results/paper_tables.md). The whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
 
 ## Method
 
-- **GRAIN** (Gated Residual Aggregation of Inter-token Neighborhoods) follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
-- **CUSP** (Clinically-guided, Uncertainty-weighted Supervision with Profile consistency) adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
+**GRAIN** (Gated Residual Aggregation of Inter-token Neighborhoods) follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
+
+**CUSP** (Clinically-guided, Uncertainty-weighted Supervision with Profile consistency) adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
 
 GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
 
 ## Repository layout
 
-```
-core.py                                   preprocessing, cache, dataset, model (DINOv3 + GRAIN), CUSP loss
-metrics.py                                label definitions, metrics, bootstrap (NumPy / pandas / scikit-learn only)
-train.py                                  training of the four models
-evaluate.py                               evaluation of a checkpoint (thresholds chosen on the validation split)
-scripts/build_cache.py                    preprocessing cache for VinDr-Mammo
-scripts/paper_tables.py                   all tables of the paper from the released predictions
-scripts/plot_figures.py                   result figures of the paper
-scripts/prepare_inbreast.py               INbreast manifest
-scripts/evaluate_inbreast.py              external test on INbreast (no fine-tuning)
-scripts/model_complexity.py               parameters and MACs with and without GRAIN
-scripts/heatmaps.py                       class activation maps, Grad-CAM, localization, faithfulness
-scripts/plot_heatmaps.py                  heat-map figures of the paper
-scripts/figure_style.py                   shared figure style
-comparators/zoo.py                        comparator networks of the whole-model comparison
-comparators/train_comparator.py           re-training and evaluation of a comparator
-comparators/prepare_weights.py            download of the comparators' pretrained weights
-comparators/summarize.py                  whole-model comparison table
-splits/vindr/                             exam-level split of VinDr-Mammo used in the paper
-checkpoints/<model>/                      trained weights (best.pt; not tracked by git)
-results/vindr/<model>/                    per-image test predictions and metrics
-results/inbreast/<model>/                 per-image predictions on INbreast (no fine-tuning)
-results/heatmaps/                         lesion masks and heat-map results
-results/comparators/<model>/              comparator predictions and training records
-results/comparators/comparison_tables.md  whole-model comparison table
-results/summary.json                      numbers behind the tables and result figures
-requirements.txt                          Python dependencies
-SHA256SUMS.txt                            checksums of released results and of the four checkpoints
-LICENSE                                   MIT License
-```
+The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `grain`, `cusp` and `LSA-SSViT` in file and folder names. `figures/` and `paper/` are not part of this repository. The plotting scripts write `figures/` locally, and the figure legends are in the paper.
 
-`figures/` and `paper/` are not part of this repository. The plotting scripts write `figures/` locally, and the figure legends are in the paper.
+| Path | Contents |
+| --- | --- |
+| `core.py` | preprocessing, cache, dataset, model (DINOv3 + GRAIN), CUSP loss |
+| `metrics.py` | label definitions, metrics, bootstrap |
+| `train.py` | training of the four models |
+| `evaluate.py` | evaluation of a checkpoint |
+| `requirements.txt` | Python dependencies |
+| `SHA256SUMS.txt` | checksums of released results and of the four checkpoints |
+| `LICENSE` | MIT License |
+| `assets/readme_header.png` | header of this page |
 
-The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `grain`, `cusp` and `LSA-SSViT` in file and folder names.
+| Path | Contents |
+| --- | --- |
+| `scripts/build_cache.py` | preprocessing cache for VinDr-Mammo |
+| `scripts/paper_tables.py` | all tables of the paper from the released predictions |
+| `scripts/plot_figures.py` | result figures of the paper |
+| `scripts/prepare_inbreast.py` | INbreast manifest |
+| `scripts/evaluate_inbreast.py` | external test on INbreast, no fine-tuning |
+| `scripts/model_complexity.py` | parameters and MACs with and without GRAIN |
+| `scripts/heatmaps.py` | class activation maps, Grad-CAM, localization, faithfulness |
+| `scripts/plot_heatmaps.py` | heat-map figures of the paper |
+| `scripts/figure_style.py` | shared figure style |
+| `comparators/zoo.py` | comparator networks |
+| `comparators/train_comparator.py` | re-training and evaluation of a comparator |
+| `comparators/prepare_weights.py` | download of the comparators' pretrained weights |
+| `comparators/summarize.py` | whole-model comparison table |
+
+| Path | Contents |
+| --- | --- |
+| `splits/vindr/` | exam-level split of VinDr-Mammo used in the paper |
+| `checkpoints/<model>/` | trained weights (`best.pt`; not tracked by git) |
+| `results/vindr/<model>/` | per-image test predictions and metrics |
+| `results/inbreast/<model>/` | per-image predictions on INbreast, no fine-tuning |
+| `results/heatmaps/` | lesion masks and heat-map results |
+| `results/comparators/<model>/` | comparator predictions and training records |
+| `results/comparators/comparison_tables.md` | whole-model comparison table |
+| `results/summary.json` | numbers behind the tables and result figures |
 
 ## Data
 
@@ -173,7 +218,9 @@ python comparators/train_comparator.py --model resnet50 --cache-root outputs/cac
 python comparators/summarize.py --runs-root outputs/comparators
 ```
 
-Each run trains on VinDr-Mammo, keeps the checkpoint with the best validation screening AUC, selects thresholds on the validation split, and evaluates the held-out and the official test split. It writes `outputs/comparators/<model>/` with the same files as `train.py`, plus `predictions_test.csv` and `metrics_test.json`. `comparators/summarize.py` builds the comparison table from these predictions and the released predictions of the Baseline and of LSA-SSViT: AUC (95% CI) and AP of every head, and the paired AUC difference of LSA-SSViT minus each network. The test predictions and training records of the comparators reported in the paper are in `results/comparators/`, so `python comparators/summarize.py` reproduces the table (`results/comparators/comparison_tables.md`) without a GPU. The pretrained weights are downloaded from their sources and are not redistributed; Mammo-CLIP weights are licensed by their authors under CC BY-NC-SA 4.0.
+Each run trains on VinDr-Mammo, keeps the checkpoint with the best validation screening AUC, selects thresholds on the validation split, and evaluates the held-out and the official test split. It writes `outputs/comparators/<model>/` with the same files as `train.py`, plus `predictions_test.csv` and `metrics_test.json`. `comparators/summarize.py` builds the comparison table from these predictions and the released predictions of the Baseline and of LSA-SSViT: AUC (95% CI) and AP of every head, and the paired AUC difference of LSA-SSViT minus each network.
+
+The test predictions and training records of the comparators reported in the paper are in `results/comparators/`, so `python comparators/summarize.py` reproduces the table (`results/comparators/comparison_tables.md`) without a GPU. The pretrained weights are downloaded from their sources and are not redistributed. Mammo-CLIP weights are licensed by their authors under CC BY-NC-SA 4.0.
 
 ## Model size and compute
 
@@ -181,13 +228,16 @@ Each run trains on VinDr-Mammo, keeps the checkpoint with the best validation sc
 python scripts/model_complexity.py --checkpoint checkpoints/LSA-SSViT/best.pt
 ```
 
-reports the parameters of the backbone and of GRAIN (4 × (49·768 + 768² + 1) = 2,509,828, i.e. 2.93% of the 85.66 M backbone parameters) and the multiply-accumulate operations per 1024 × 1024 image: 660.7 GMACs without and 671.0 GMACs with GRAIN (+10.28 GMACs, +1.56%).
+GRAIN adds 4 × (49·768 + 768² + 1) = 2,509,828 parameters, which is 2.93% of the 85.66 M backbone parameters.
+
+| | Without GRAIN | With GRAIN |
+| --- | ---: | ---: |
+| Parameters | 85.66 M backbone | +2,509,828 (2.93%) |
+| Multiply-accumulates per 1024 × 1024 image | 660.7 G | 671.0 G (+10.28 G, +1.56%) |
 
 ## Heat maps
 
-Each head is a linear layer applied to the mean of the final patch tokens, so its logit is exactly the bias plus the mean of per-token contributions. These contributions on the 64 × 64 token grid are the class activation maps; they need no gradient and no approximation.
-
-The two map figures stack two blocks with the same example images. The comparator networks shown in the figures (see [Comparator networks](#comparator-networks)) are grouped by how the stages that produce the mapped features mix information between positions: globally, by self-attention over all tokens (block a: RoPE-ViT-B/16, DINOv2-B/14 and RAD-DINO, with the Baseline, titled by its backbone DINOv3-B/16), or locally, by convolution or within windows (block b: ResNet-50, EfficientNet-B3, ConvNeXt-T, MobileNetV4-Conv-M, MambaVision-T and Mammo-CLIP; MambaVision-T applies its Mamba and self-attention blocks within 14 × 14- and 7 × 7-token windows at the 1,024 × 1,024-pixel input). LSA-SSViT closes both blocks. The comparator networks are mapped with Grad-CAM, without the final ReLU, on their last spatial feature map that reaches the head (the feature map of each network is listed in `scripts/heatmaps.py`). For a linear head on average-pooled features (ResNet-50, EfficientNet-B3, MambaVision-T, DINOv2-B/14, RAD-DINO, Mammo-CLIP, the Baseline and LSA-SSViT), Grad-CAM equals the exact map divided by the number of positions; for ConvNeXt-T and MobileNetV4-Conv-M, whose pooling is followed by a LayerNorm or by a 1 × 1 convolution, BatchNorm and ReLU, and for RoPE-ViT-B/16, whose head reads the class token, it is plain Grad-CAM. `gradcam-check` confirms the equality for the Baseline and LSA-SSViT on 16 test images (Pearson r ≥ 0.9999999, scale 1/4096; `results/heatmaps/gradcam_check.json`).
+Each head is a linear layer applied to the mean of the final patch tokens, so its logit is exactly the bias plus the mean of per-token contributions. These contributions on the 64 × 64 token grid are the class activation maps. They need no gradient and no approximation.
 
 Pointing game on the official VinDr-Mammo test split: the fraction of images whose map maximum lies within 15 pixels of a radiologist-annotated lesion. The annotations were never used for training.
 
@@ -196,10 +246,20 @@ Pointing game on the official VinDr-Mammo test split: the fraction of images who
 | Baseline | 0.029 | 0.023 | 0.029 |
 | +GRAIN | 0.366 | 0.114 | 0.442 |
 | +CUSP | 0.063 | 0.046 | 0.144 |
-| LSA-SSViT | 0.525 | 0.210 | 0.404 |
+| **LSA-SSViT** | **0.525** | **0.210** | **0.404** |
 | Chance | 0.088 | 0.080 | 0.124 |
 
 Confidence intervals, the top-1% precision and the paired differences versus the baseline are in [`results/heatmaps/localization_table.md`](results/heatmaps/localization_table.md).
+
+<details>
+<summary>How the map figures are constructed</summary>
+
+The two map figures stack two blocks with the same example images. The comparator networks shown in the figures (see [Comparator networks](#comparator-networks)) are grouped by how the stages that produce the mapped features mix information between positions: globally, by self-attention over all tokens (block a: RoPE-ViT-B/16, DINOv2-B/14 and RAD-DINO, with the Baseline, titled by its backbone DINOv3-B/16), or locally, by convolution or within windows (block b: ResNet-50, EfficientNet-B3, ConvNeXt-T, MobileNetV4-Conv-M, MambaVision-T and Mammo-CLIP; MambaVision-T applies its Mamba and self-attention blocks within 14 × 14- and 7 × 7-token windows at the 1,024 × 1,024-pixel input). LSA-SSViT closes both blocks. The comparator networks are mapped with Grad-CAM, without the final ReLU, on their last spatial feature map that reaches the head (the feature map of each network is listed in `scripts/heatmaps.py`). For a linear head on average-pooled features (ResNet-50, EfficientNet-B3, MambaVision-T, DINOv2-B/14, RAD-DINO, Mammo-CLIP, the Baseline and LSA-SSViT), Grad-CAM equals the exact map divided by the number of positions; for ConvNeXt-T and MobileNetV4-Conv-M, whose pooling is followed by a LayerNorm or by a 1 × 1 convolution, BatchNorm and ReLU, and for RoPE-ViT-B/16, whose head reads the class token, it is plain Grad-CAM. `gradcam-check` confirms the equality for the Baseline and LSA-SSViT on 16 test images (Pearson r ≥ 0.9999999, scale 1/4096; `results/heatmaps/gradcam_check.json`).
+
+</details>
+
+<details>
+<summary>Commands and what each one checks</summary>
 
 ```bash
 python scripts/heatmaps.py cam --cache-root outputs/cache/vindr_1024
@@ -235,19 +295,21 @@ python scripts/plot_heatmaps.py --cache-root outputs/cache/vindr_1024 \
 - Each map figure is also written block by block (`figures/heatmap_evidence_maps_a`/`_b` and `figures/heatmap_inbreast_supp_a`/`_b`: the global self-attention block and the local token mixing block, each with its own colour key).
 - Without image arguments, `plot_heatmaps.py` redraws only the localization and faithfulness figures.
 
+</details>
+
 ## Reproducibility notes
 
-- Seeds, data order, augmentation and model initialisation are fixed, and deterministic kernels are requested. Bit-identical retraining additionally requires the same GPU type and library versions; the evaluation of the released checkpoints is deterministic up to floating-point differences between GPUs.
+- Seeds, data order, augmentation and model initialisation are fixed, and deterministic kernels are requested. Bit-identical retraining additionally requires the same GPU type and library versions. The evaluation of the released checkpoints is deterministic up to floating-point differences between GPUs.
 - The backbone keeps the default training-mode behaviour of the Hugging Face DINOv3 implementation.
-- Scores are not recalibrated: the class-balanced loss shifts probabilities upwards, so thresholds are always taken from the validation split.
+- Scores are not recalibrated. The class-balanced loss shifts probabilities upwards, so thresholds are always taken from the validation split.
 
 ## Citation
 
 If you use this code or the released results, please cite the paper and this repository:
 
 > Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening.
-
-https://github.com/3xiaoshayu/LSA-SSViT
+>
+> https://github.com/3xiaoshayu/LSA-SSViT
 
 The BibTeX entry will be added when the preprint is public.
 
