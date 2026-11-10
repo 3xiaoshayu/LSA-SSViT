@@ -51,6 +51,9 @@ python train.py --cache-root outputs/cache/vindr_1024 --experiment-name LSA-SSVi
 
 `--image-root` is the folder that contains one sub-folder per exam (`<study_id>/<image_id>.dicom`). What the cache contains is described in [Preprocessing](#preprocessing). `train.py` and `evaluate.py` can also preprocess on the fly with `--image-root`, which differs from the cache only by the uint16 rounding (about 7.6e-6 per pixel).
 
+<details>
+<summary>Settings used in the paper</summary>
+
 | Setting | Value used in the paper |
 | --- | --- |
 | Optimizer | AdamW, weight decay 1e-4 |
@@ -64,6 +67,8 @@ python train.py --cache-root outputs/cache/vindr_1024 --experiment-name LSA-SSVi
 | Precision | mixed precision; the four GRAIN-equipped blocks are computed in FP32 |
 | Seed | 2026 |
 | Hardware | a GPU with at least 24 GB of memory |
+
+</details>
 
 Each run writes `outputs/runs/<name>/best.pt` (best validation screening AUC), `last.pt` (for `--resume`), `history.csv`, `train.log`, `run.json`, and the validation and held-out predictions.
 
@@ -122,12 +127,32 @@ Put a checkpoint at the path above and use the evaluation command. The same file
 
 Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level. The intervals are 95% confidence intervals from 2,000 bootstrap replicates over exams. Reproduce this table with the first command in [Evaluation](#evaluation).
 
-| Model | Screening AUC | Screening AP | Mass AUC | Mass AP | Calcification AUC | Calcification AP |
-| --- | --- | ---: | --- | ---: | --- | ---: |
-| Baseline | 0.8123 (0.7810–0.8442) | 0.526 | 0.8215 (0.7826–0.8570) | 0.291 | 0.9176 (0.8688–0.9596) | 0.686 |
-| +GRAIN | 0.8331 (0.8033–0.8624) | 0.552 | 0.8442 (0.8091–0.8788) | 0.448 | 0.9272 (0.8796–0.9672) | 0.705 |
-| +CUSP | 0.8286 (0.7987–0.8583) | 0.542 | 0.8332 (0.7961–0.8677) | 0.347 | 0.9163 (0.8692–0.9577) | 0.642 |
-| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | **0.548** | **0.8496** (0.8147–0.8825) | **0.464** | **0.9371** (0.8945–0.9726) | **0.723** |
+**Screening**
+
+| Model | AUC | AP |
+| --- | ---: | ---: |
+| Baseline | 0.8123 (0.7810–0.8442) | 0.526 |
+| +GRAIN | 0.8331 (0.8033–0.8624) | 0.552 |
+| +CUSP | 0.8286 (0.7987–0.8583) | 0.542 |
+| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | **0.548** |
+
+**Mass**
+
+| Model | AUC | AP |
+| --- | ---: | ---: |
+| Baseline | 0.8215 (0.7826–0.8570) | 0.291 |
+| +GRAIN | 0.8442 (0.8091–0.8788) | 0.448 |
+| +CUSP | 0.8332 (0.7961–0.8677) | 0.347 |
+| **LSA-SSViT** | **0.8496** (0.8147–0.8825) | **0.464** |
+
+**Calcification**
+
+| Model | AUC | AP |
+| --- | ---: | ---: |
+| Baseline | 0.9176 (0.8688–0.9596) | 0.686 |
+| +GRAIN | 0.9272 (0.8796–0.9672) | 0.705 |
+| +CUSP | 0.9163 (0.8692–0.9577) | 0.642 |
+| **LSA-SSViT** | **0.9371** (0.8945–0.9726) | **0.723** |
 
 All tables of the paper, including the paired significance tests, operating points, exam-level results and the external test on INbreast without fine-tuning, are in [`results/paper_tables.md`](results/paper_tables.md). The whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
 
