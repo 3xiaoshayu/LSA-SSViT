@@ -6,18 +6,18 @@
 </p>
 
 <p align="center">
-  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg"></a>
-  <a href="https://www.python.org/"><img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-blue.svg"></a>
-  <a href="https://pytorch.org/"><img alt="PyTorch 2.3+" src="https://img.shields.io/badge/PyTorch-2.3%2B-ee4c2c.svg"></a>
-  <a href="https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m"><img alt="Backbone: DINOv3 ViT-B/16" src="https://img.shields.io/badge/Backbone-DINOv3%20ViT--B%2F16-6f42c1.svg"></a>
+  <a href="https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m"><img alt="Backbone: DINOv3 ViT-B/16" src="https://img.shields.io/badge/Backbone-DINOv3%20ViT--B%2F16-0072b2?labelColor=1e293b"></a>
+  <a href="#data"><img alt="Benchmarks: VinDr-Mammo & INbreast" src="https://img.shields.io/badge/Benchmarks-VinDr--Mammo%20%26%20INbreast-009e73?labelColor=1e293b"></a>
+  <a href="#quick-start"><img alt="Reproducibility: CPU Tables & Plots" src="https://img.shields.io/badge/Reproducibility-CPU%20Tables%20%26%20Plots-c95e24?labelColor=1e293b"></a>
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-475569?labelColor=1e293b"></a>
 </p>
 
 This repository is the official implementation of **Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening**.
 
-LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method) and [CUSP](#method). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
+LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#grain) and [CUSP](#cusp). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
 
 > [!NOTE]
-> This repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables. It does not contain mammograms, the figures of the paper, or trained weights.
+> This repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables and plots. It does not contain mammograms or trained weights.
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> &nbsp;·&nbsp;
@@ -27,18 +27,23 @@ LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method
   <a href="#pre-trained-models">Pre-trained models</a> &nbsp;·&nbsp;
   <a href="#results">Results</a> &nbsp;·&nbsp;
   <a href="#method">Method</a> &nbsp;·&nbsp;
-  <a href="#data">Data</a>
+  <a href="#data">Data</a> &nbsp;·&nbsp;
+  <a href="#comparator-networks">Comparators</a> &nbsp;·&nbsp;
+  <a href="#heat-maps">Heat maps</a> &nbsp;·&nbsp;
+  <a href="#citation">Citation</a>
 </p>
 
 ## Quick Start
 
-Reproduce every table of the paper from the released predictions, with no GPU, no checkpoint and no mammograms:
+Reproduce every table and statistical plot of the paper from the released predictions, with no GPU, no checkpoint and no mammograms:
 
 ```bash
 git clone https://github.com/3xiaoshayu/LSA-SSViT.git
 cd LSA-SSViT
-pip install numpy pandas scikit-learn
+pip install numpy pandas scikit-learn matplotlib
 python scripts/paper_tables.py    # writes results/summary.json and results/paper_tables.md
+python scripts/plot_figures.py    # writes figures/*.pdf and figures/*.png
+python scripts/plot_heatmaps.py   # writes localization and faithfulness figures
 ```
 
 The whole-model comparison (`python comparators/summarize.py`) additionally imports PyTorch; a CPU build is enough.
@@ -146,54 +151,91 @@ Put a checkpoint at the path above and use the evaluation command. The same file
 
 ## Results
 
-Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level. The intervals are 95% confidence intervals from 2,000 bootstrap replicates over exams. Reproduce this table with the first command in [Evaluation](#evaluation).
+### Ablation on VinDr-Mammo
+
+Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level. Confidence intervals come from 2,000 bootstrap replicates over exams; `*` marks a paired AUC difference versus the Baseline whose 95% CI excludes 0. Reproduce these tables with the first command in [Evaluation](#evaluation).
 
 <p align="center">
-  <img src="assets/ablation_forest_plot.png" alt="Paired image-level AUC differences of +GRAIN, +CUSP and LSA-SSViT relative to the Baseline, with 95% confidence intervals" width="760">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/ablation_forest_plot_dark.png">
+    <img src="assets/ablation_forest_plot.png" alt="Paired image-level AUC differences of +GRAIN, +CUSP and LSA-SSViT relative to the Baseline, with 95% confidence intervals" width="760">
+  </picture>
 </p>
 
 | Model | GRAIN | CUSP | Screening AUC | Screening AP | Mass AUC | Mass AP | Calcification AUC | Calcification AP |
 | --- | :---: | :---: | ---: | ---: | ---: | ---: | ---: | ---: |
 | Baseline | | | 0.8123 | 0.526 | 0.8215 | 0.291 | 0.9176 | 0.686 |
-| +GRAIN | ✓ | | 0.8331 | **0.552** | 0.8442 | 0.448 | 0.9272 | 0.705 |
-| +CUSP | | ✓ | 0.8286 | 0.542 | 0.8332 | 0.347 | 0.9163 | 0.642 |
-| **LSA-SSViT** | ✓ | ✓ | **0.8348** | 0.548 | **0.8496** | **0.464** | **0.9371** | **0.723** |
-
-Bold marks the best value in each column.
+| +GRAIN | ✓ | | 0.8331\* | **0.552** | 0.8442\* | 0.448 | 0.9272 | 0.705 |
+| +CUSP | | ✓ | 0.8286\* | 0.542 | 0.8332 | 0.347 | 0.9163 | 0.642 |
+| **LSA-SSViT** | ✓ | ✓ | **0.8348**\* | 0.548 | **0.8496**\* | **0.464** | **0.9371**\* | **0.723** |
 
 <details>
-<summary>Per-task tables with 95% confidence intervals</summary>
+<summary>Per-task tables with 95% confidence intervals and paired ΔAUC</summary>
 
 **Screening**
 
-| Model | AUC | AP |
-| --- | ---: | ---: |
-| Baseline | 0.8123 (0.7810–0.8442) | 0.526 |
-| +GRAIN | 0.8331 (0.8033–0.8624) | **0.552** |
-| +CUSP | 0.8286 (0.7987–0.8583) | 0.542 |
-| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | 0.548 |
+| Model | AUC (95% CI) | ΔAUC vs Baseline (95% CI) | AP | Sens. at 90% Spec. | Spec. at 90% Sens. |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 0.8123 (0.7810–0.8442) | — | 0.526 | 56.0% | 39.1% |
+| +GRAIN | 0.8331 (0.8033–0.8624) | +0.0208 (+0.0025, +0.0377)\* | **0.552** | 57.8% | 45.3% |
+| +CUSP | 0.8286 (0.7987–0.8583) | +0.0163 (+0.0032, +0.0299)\* | 0.542 | 57.3% | 45.3% |
+| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | **+0.0225** (+0.0063, +0.0390)\* | 0.548 | **58.9%** | **49.6%** |
 
 **Mass**
 
-| Model | AUC | AP |
-| --- | ---: | ---: |
-| Baseline | 0.8215 (0.7826–0.8570) | 0.291 |
-| +GRAIN | 0.8442 (0.8091–0.8788) | 0.448 |
-| +CUSP | 0.8332 (0.7961–0.8677) | 0.347 |
-| **LSA-SSViT** | **0.8496** (0.8147–0.8825) | **0.464** |
+| Model | AUC (95% CI) | ΔAUC vs Baseline (95% CI) | AP | Sens. at 90% Spec. | Spec. at 90% Sens. |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 0.8215 (0.7826–0.8570) | — | 0.291 | 57.1% | 45.6% |
+| +GRAIN | 0.8442 (0.8091–0.8788) | +0.0228 (+0.0019, +0.0444)\* | 0.448 | 58.9% | 48.1% |
+| +CUSP | 0.8332 (0.7961–0.8677) | +0.0117 (−0.0044, +0.0286) | 0.347 | 59.4% | **50.8%** |
+| **LSA-SSViT** | **0.8496** (0.8147–0.8825) | **+0.0282** (+0.0060, +0.0506)\* | **0.464** | **61.6%** | 49.6% |
 
 **Calcification**
 
-| Model | AUC | AP |
-| --- | ---: | ---: |
-| Baseline | 0.9176 (0.8688–0.9596) | 0.686 |
-| +GRAIN | 0.9272 (0.8796–0.9672) | 0.705 |
-| +CUSP | 0.9163 (0.8692–0.9577) | 0.642 |
-| **LSA-SSViT** | **0.9371** (0.8945–0.9726) | **0.723** |
+| Model | AUC (95% CI) | ΔAUC vs Baseline (95% CI) | AP | Sens. at 90% Spec. | Spec. at 90% Sens. |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 0.9176 (0.8688–0.9596) | — | 0.686 | 82.9% | 70.4% |
+| +GRAIN | 0.9272 (0.8796–0.9672) | +0.0096 (−0.0062, +0.0286) | 0.705 | 83.8% | 69.0% |
+| +CUSP | 0.9163 (0.8692–0.9577) | −0.0013 (−0.0197, +0.0176) | 0.642 | 79.0% | 66.6% |
+| **LSA-SSViT** | **0.9371** (0.8945–0.9726) | **+0.0194** (+0.0009, +0.0401)\* | **0.723** | **84.8%** | **73.6%** |
 
 </details>
 
-All tables of the paper, including the paired significance tests, operating points, exam-level results and the external test on INbreast without fine-tuning, are in [`results/paper_tables.md`](results/paper_tables.md). The whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
+### External test on INbreast (no fine-tuning)
+
+VinDr-Mammo checkpoints applied directly to INbreast (108 patients, 410 images) without fine-tuning or recalibration; 95% CIs resample patients:
+
+| Model | Screening AUC (95% CI) | ΔAUC vs Baseline (95% CI) | Screening AP | Mass AUC | Mass AP | Calcification AUC | Calcification AP |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 0.8174 (0.7484–0.8834) | — | 0.698 | 0.7577 | 0.512 | 0.6988 | 0.863 |
+| +GRAIN | **0.8628** (0.7982–0.9219) | +0.0454 (+0.0169, +0.0780)\* | **0.765** | 0.8735 | 0.797 | 0.7070 | 0.871 |
+| +CUSP | 0.8409 (0.7740–0.9039) | +0.0235 (+0.0034, +0.0432)\* | 0.712 | 0.7940 | 0.601 | 0.6825 | 0.854 |
+| **LSA-SSViT** | 0.8605 (0.7970–0.9179) | +0.0431 (+0.0185, +0.0698)\* | 0.757 | **0.8757** | **0.813** | **0.7078** | **0.874** |
+
+<details>
+<summary>Comparison with 9 networks trained under the same protocol (VinDr-Mammo test split)</summary>
+
+Here `*` indicates that the 95% CI of the paired AUC difference `AUC(LSA-SSViT) − AUC(network)` excludes 0:
+
+| Network | Family | Screening AUC | Screening AP | Mass AUC | Mass AP | Calcification AUC | Calcification AP |
+| --- | --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| ResNet-50 | CNN | 0.7898\* | 0.491 | 0.7946\* | 0.359 | 0.9287 | 0.686 |
+| EfficientNet-B3 | CNN | 0.8088\* | 0.531 | 0.8110\* | 0.399 | 0.9347 | 0.683 |
+| ConvNeXt-T | CNN | 0.7973\* | 0.473 | 0.8002\* | 0.339 | 0.9163 | 0.518 |
+| MobileNetV4-Conv-M | CNN | 0.7848\* | 0.459 | 0.8110\* | 0.360 | 0.8792\* | 0.519 |
+| RoPE-ViT-B/16 | Transformer | 0.8253 | 0.528 | 0.8369 | 0.449 | 0.9364 | 0.683 |
+| MambaVision-T | Hybrid | 0.8007\* | 0.503 | 0.8136\* | 0.371 | 0.9257 | 0.691 |
+| DINOv2-B/14 | Foundation model | 0.7800\* | 0.409 | 0.7779\* | 0.235 | 0.9075 | 0.376 |
+| RAD-DINO | Medical foundation model | 0.7759\* | 0.432 | 0.7924\* | 0.354 | 0.8800\* | 0.523 |
+| Mammo-CLIP (EfficientNet-B2) | Mammography foundation model | 0.8226 | 0.526 | 0.8444 | 0.419 | 0.9155 | 0.629 |
+| Baseline (DINOv3-B/16) | Ours, without GRAIN & CUSP | 0.8123\* | 0.526 | 0.8215\* | 0.291 | 0.9176\* | 0.686 |
+| **LSA-SSViT** | **Ours** | **0.8348** | **0.548** | **0.8496** | **0.464** | **0.9371** | **0.723** |
+
+Full confidence intervals and paired differences are in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
+
+</details>
+
+All tables of the paper, including validation-selected operating points and exam-level AUCs, are in [`results/paper_tables.md`](results/paper_tables.md). The whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
 
 ## Method
 
@@ -217,13 +259,35 @@ All tables of the paper, including the paired significance tests, operating poin
 
 ### GRAIN
 
-Gated Residual Aggregation of Inter-token Neighborhoods follows each of the last four transformer blocks. It arranges the patch tokens on their 64 × 64 grid, aggregates every token's 7 × 7 neighbourhood with a depthwise convolution, mixes channels with a 1 × 1 convolution and adds the result back through a bounded, zero-initialised gate: `X + 0.1·tanh(g)·tanh(PW(DW(X)))`. The four operators add 2.5 M parameters.
+**Gated Residual Aggregation of Inter-token Neighborhoods** follows each of the last four transformer blocks (blocks 9–12). It reshapes the $N = 4{,}096$ patch tokens onto their $64 \times 64$ spatial grid, aggregates every token's $7 \times 7$ neighbourhood ($112 \times 112\text{ px}$ on the input) with a depthwise convolution $\text{DW}$, mixes channels with a $1 \times 1$ pointwise convolution $\text{PW}$, and adds the result back through a zero-initialised bounded gate:
+
+$$
+X' = X + \alpha \tanh(g)\,\tanh\big(\text{PW}(\text{DW}(X))\big), \qquad \alpha = 0.1,\quad g_0 = 0
+$$
+
+With $g_0 = 0$, each module is an exact identity mapping at initialization, leaving the pretrained backbone unaltered at step 0 while bounding the magnitude of any local correction to $|X' - X| < 0.1$. Prefix tokens (class and 4 register tokens) bypass GRAIN. Across the four modules, GRAIN adds $4 \times (49 C + C^2 + 1) = 2{,}509{,}828$ parameters (+2.93%).
 
 ### CUSP
 
-Clinically-guided, Uncertainty-weighted Supervision with Profile consistency adds two training-only terms to the class-balanced BCE loss: `L = L_BCE + 0.3·L_CU + 0.1·L_PC`. `L_CU` weights the loss of every image by the product of a clinical BI-RADS prior, which peaks at BI-RADS 3, and the model's predictive ambiguity; `L_PC` is a soft-margin triplet loss that pulls each image towards the nearest image with the same label profile and away from the nearest image with a different one. Inference is unchanged.
+**Clinically-guided, Uncertainty-weighted Supervision with Profile consistency** adds two training-only terms to the class-balanced binary cross-entropy loss:
 
-GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
+$$
+\mathcal{L} = \mathcal{L}_{\text{BCE}} + \lambda_1 \mathcal{L}_{\text{CU}} + \lambda_2 \mathcal{L}_{\text{PC}}, \qquad \lambda_1 = 0.3,\quad \lambda_2 = 0.1
+$$
+
+- **Clinically guided uncertainty weighting ($\mathcal{L}_{\text{CU}}$):** weights the mean class-balanced BCE of each image $i$ by the product of a clinical BI-RADS prior $\pi(b_i)$ — with $\pi(b) = (1.0,\, 1.2,\, \mathbf{2.0},\, 1.4,\, 1.2)$ for BI-RADS $b \in \{1, 2, 3, 4, 5\}$, peaking at the BI-RADS 3 recall boundary — and the detached predictive ambiguity $\bar{a}_i = \frac{1}{3}\sum_{k=1}^{3}\big(1 - |2\,\text{sg}(p_{ik}) - 1|\big)$:
+
+$$
+\mathcal{L}_{\text{CU}} = \frac{1}{B}\sum_{i=1}^{B} \pi(b_i)\,\bar{a}_i\,\overline{\text{BCE}}_i
+$$
+
+- **Label-profile consistency ($\mathcal{L}_{\text{PC}}$):** a soft-margin triplet loss ($\delta = 0.2$) on the $\ell_2$-normalised pooled features $e_i = f_i / \lVert f_i \rVert_2$ that pulls each anchor towards the nearest in-batch image sharing the same 3-label profile $c_i \in \{0,1\}^3$ and pushes it away from the nearest image with a different profile:
+
+$$
+\mathcal{L}_{\text{PC}} = \frac{1}{|\mathcal{A}|}\sum_{i \in \mathcal{A}} \text{softplus}\left(d_i^+ - d_i^- + \delta\right)
+$$
+
+Both terms are active only during training; inference parameters and compute are identical to the Baseline. GRAIN is implemented in `core.py` (class `GRAIN`, used by `BreastClassifier`) and CUSP in `core.py` (function `cusp_loss`, used by `train.py`).
 
 ## Repository layout
 
@@ -239,8 +303,9 @@ The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `
 | `evaluate.py` | evaluation of a checkpoint |
 | `requirements.txt` | Python dependencies |
 | `SHA256SUMS.txt` | checksums of released results and of the four checkpoints |
+| `CITATION.cff` | citation metadata for GitHub's *Cite this repository* widget |
 | `LICENSE` | MIT License |
-| `assets/readme_header.png` | header of this page; `readme_header_dark.png` is the dark-mode version |
+| `assets/` | light and dark header banners and result plots for this page (`*_dark.png` for dark mode) |
 
 ### Scripts
 
@@ -325,19 +390,43 @@ GRAIN adds 4 × (49·768 + 768² + 1) = 2,509,828 parameters, which is 2.93% of 
 
 ## Heat maps
 
-Each head is a linear layer applied to the mean of the final patch tokens, so its logit is exactly the bias plus the mean of per-token contributions. These contributions on the 64 × 64 token grid are the class activation maps. They need no gradient and no approximation.
+Each head is a linear layer applied to the mean of the final patch tokens $z_{u,v} \in \mathbb{R}^{768}$ on the $64 \times 64$ grid ($N = 4{,}096$), so its logit is an exact spatial decomposition with no gradient and no post-hoc approximation:
 
-Pointing game on the official VinDr-Mammo test split: the fraction of images whose map maximum lies within 15 pixels of a radiologist-annotated lesion. The annotations were never used for training.
+$$
+\ell_k = \beta_k + \frac{1}{N}\sum_{u,v} w_k^\top z_{u,v}, \qquad M_k(u,v) = w_k^\top z_{u,v}
+$$
 
-| Model | Screening (n = 238) | Mass (n = 219) | Calcification (n = 104) |
-| --- | ---: | ---: | ---: |
-| Baseline | 0.029 | 0.023 | 0.029 |
-| +GRAIN | 0.366 | 0.114 | 0.442 |
-| +CUSP | 0.063 | 0.046 | 0.144 |
-| **LSA-SSViT** | **0.525** | **0.210** | **0.404** |
-| Chance | 0.088 | 0.080 | 0.124 |
+### Weakly supervised lesion localization
 
-Confidence intervals, the top-1% precision and the paired differences versus the baseline are in [`results/heatmaps/localization_table.md`](results/heatmaps/localization_table.md).
+Pointing game (fraction of images whose map maximum lies within 15 pixels of a radiologist-annotated lesion) and top-1% precision (share of the 1% highest-scoring breast pixels inside a lesion) on the official VinDr-Mammo test split. Lesion annotations were never used during training.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/heatmap_localization_dark.png">
+    <img src="assets/heatmap_localization.png" alt="Weakly supervised lesion localization: pointing game and top-1% precision across the four ablation models" width="820">
+  </picture>
+</p>
+
+| Model | Screening PG ($n=238$) | Screening Top-1% | Mass PG ($n=219$) | Mass Top-1% | Calcification PG ($n=104$) | Calcification Top-1% |
+| --- | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baseline | 0.029 | 0.018 | 0.023 | 0.014 | 0.029 | 0.029 |
+| +GRAIN | 0.366\* | 0.265\* | 0.114\* | **0.072**\* | **0.442**\* | 0.332\* |
+| +CUSP | 0.063 | 0.045 | 0.046 | 0.035 | 0.144\* | 0.101\* |
+| **LSA-SSViT** | **0.525**\* | **0.460**\* | **0.210**\* | 0.065\* | 0.404\* | **0.344**\* |
+| Chance | 0.088 | 0.061 | 0.080 | 0.053 | 0.124 | 0.095 |
+
+On the external **INbreast** test set ($n = 110$ images with lesion contours, zero-shot), screening pointing game and top-1% precision rise from **0.027 / 0.034** (Baseline) to **0.600\* / 0.477\*** (LSA-SSViT), versus a chance level of 0.069 / 0.047. Full confidence intervals are in [`results/heatmaps/localization_table.md`](results/heatmaps/localization_table.md) and [`results/heatmaps/inbreast_localization_table.md`](results/heatmaps/inbreast_localization_table.md).
+
+### Faithfulness
+
+Two checks verify that the exact maps reflect the evidence actually used by the network: (a) **token deletion** on the calcification head (zeroing breast tokens in descending order of map value versus random order; lower Deletion AUC means faster probability drop), and (b) **cascading parameter randomization** from the linear head down to block 9.
+
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="assets/heatmap_faithfulness_dark.png">
+    <img src="assets/heatmap_faithfulness.png" alt="Faithfulness of the exact class activation maps: deletion test and cascading randomization" width="820">
+  </picture>
+</p>
 
 <details>
 <summary>How the map figures are constructed</summary>
@@ -393,13 +482,16 @@ python scripts/plot_heatmaps.py --cache-root outputs/cache/vindr_1024 \
 
 ## Citation
 
-If you use this code or the released results, please cite the paper and this repository:
+If you use this code or the released results, please cite the paper and this repository (or use the **Cite this repository** button in the GitHub sidebar):
 
-> Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening.
->
-> https://github.com/3xiaoshayu/LSA-SSViT
-
-The BibTeX entry will be added when the preprint is public.
+```bibtex
+@misc{liu2026lsassvit,
+  title  = {Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening},
+  author = {Liu, Xiaoke and Wang, Jin and Li, Boao and Wang, Xianfeng and Peng, Yuzhong and Liu, Jianming and Teng, Wenjie and Han, Xiaoqing},
+  year   = {2026},
+  url    = {https://github.com/3xiaoshayu/LSA-SSViT}
+}
+```
 
 ## License
 
