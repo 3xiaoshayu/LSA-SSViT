@@ -244,17 +244,17 @@ All tables of the paper, including validation-selected operating points and exam
 ```text
 1024 × 1024 mammogram (1 channel, repeated to 3)
   │
-  ├─ Patch embedding (16 × 16) + 2-D RoPE ............ 64 × 64 = 4,096 patch tokens
-  ├─ Blocks 1–8 ...................................... frozen
+  ├─ Patch embedding (16 × 16) + 2-D RoPE .. 64 × 64 = 4,096 tokens
+  ├─ Blocks 1–8 ............................ frozen
   ├─ Block 9  → GRAIN ┐
-  ├─ Block 10 → GRAIN │ ............................... fine-tuned blocks,
-  ├─ Block 11 → GRAIN │                                 GRAIN computed in FP32
+  ├─ Block 10 → GRAIN │ .................... fine-tuned blocks,
+  ├─ Block 11 → GRAIN │                      GRAIN computed in FP32
   ├─ Block 12 → GRAIN ┘
   ├─ LayerNorm → mean of patch tokens → dropout → linear head
-  │                                              ├─ screening (BI-RADS 3–5 vs 1–2)
-  │                                              ├─ mass
-  │                                              └─ suspicious calcification
-  └─ Training only: L = L_BCE + 0.3 · L_CU + 0.1 · L_PC   (CUSP; inference unchanged)
+  │                                          ├─ screening (BI-RADS 3–5)
+  │                                          ├─ mass
+  │                                          └─ suspicious calcification
+  └─ Training only: L = L_BCE + 0.3·L_CU + 0.1·L_PC  (CUSP; train only)
 ```
 
 ### GRAIN
@@ -275,7 +275,7 @@ $$
 \mathcal{L} = \mathcal{L}_{\text{BCE}} + \lambda_1 \mathcal{L}_{\text{CU}} + \lambda_2 \mathcal{L}_{\text{PC}}, \qquad \lambda_1 = 0.3,\quad \lambda_2 = 0.1
 $$
 
-- **Clinically guided uncertainty weighting ($\mathcal{L}_{\text{CU}}$):** weights the mean class-balanced BCE of each image $i$ by the product of a clinical BI-RADS prior $\pi(b_i)$ — with $\pi(b) = (1.0, 1.2, \mathbf{2.0}, 1.4, 1.2)$ for BI-RADS $b \in \lbrace 1, 2, 3, 4, 5 \rbrace$, peaking at the BI-RADS 3 recall boundary — and the detached predictive ambiguity $a_{ik} = 1 - |2\operatorname{sg}(p_{ik}) - 1|$:
+- **Clinically guided uncertainty weighting ($\mathcal{L}_{\text{CU}}$):** weights the mean class-balanced BCE of each image $i$ by the product of a clinical BI-RADS prior $\pi(b_i)$ — with $\pi(b) = (1.0, 1.2, \mathbf{2.0}, 1.4, 1.2)$ for BI-RADS $b \in \lbrace 1, 2, 3, 4, 5 \rbrace$, peaking at the BI-RADS 3 recall boundary — and the detached predictive ambiguity $a_{ik} = 1 - |2\text{sg}(p_{ik}) - 1|$:
 
 $$
 \mathcal{L}_{\text{CU}} = \frac{1}{B}\sum_{i=1}^{B} \pi(b_i)\bar{a}_i\overline{\text{BCE}}_i, \qquad \bar{a}_i = \frac{1}{3}\sum_{k=1}^{3} a_{ik}
@@ -486,8 +486,12 @@ If you use this code or the released results, please cite the paper and this rep
 
 ```bibtex
 @misc{liu2026lsassvit,
-  title  = {Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening},
-  author = {Liu, Xiaoke and Wang, Jin and Li, Boao and Wang, Xianfeng and Peng, Yuzhong and Liu, Jianming and Teng, Wenjie and Han, Xiaoqing},
+  title  = {Seeing the Grain, Deciding at the Cusp: Lesion-Scale and
+            Clinically Guided Adaptation of a Vision Foundation Model
+            for Multi-task Mammography Screening},
+  author = {Liu, Xiaoke and Wang, Jin and Li, Boao and Wang, Xianfeng and
+            Peng, Yuzhong and Liu, Jianming and Teng, Wenjie and
+            Han, Xiaoqing},
   year   = {2026},
   url    = {https://github.com/3xiaoshayu/LSA-SSViT}
 }
