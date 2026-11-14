@@ -5,6 +5,13 @@
   </picture>
 </p>
 
+<p align="center">
+  <a href="LICENSE"><img alt="License: MIT" src="https://img.shields.io/badge/License-MIT-green.svg"></a>
+  <a href="https://www.python.org/"><img alt="Python 3.10+" src="https://img.shields.io/badge/Python-3.10%2B-blue.svg"></a>
+  <a href="https://pytorch.org/"><img alt="PyTorch 2.3+" src="https://img.shields.io/badge/PyTorch-2.3%2B-ee4c2c.svg"></a>
+  <a href="https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m"><img alt="Backbone: DINOv3 ViT-B/16" src="https://img.shields.io/badge/Backbone-DINOv3%20ViT--B%2F16-6f42c1.svg"></a>
+</p>
+
 This repository is the official implementation of **Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening**.
 
 LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method) and [CUSP](#method). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
@@ -13,6 +20,7 @@ LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method
 > This repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables. It does not contain mammograms, the figures of the paper, or trained weights.
 
 <p align="center">
+  <a href="#quick-start">Quick Start</a> &nbsp;·&nbsp;
   <a href="#requirements">Requirements</a> &nbsp;·&nbsp;
   <a href="#training">Training</a> &nbsp;·&nbsp;
   <a href="#evaluation">Evaluation</a> &nbsp;·&nbsp;
@@ -21,6 +29,19 @@ LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#method
   <a href="#method">Method</a> &nbsp;·&nbsp;
   <a href="#data">Data</a>
 </p>
+
+## Quick Start
+
+Reproduce every table of the paper from the released predictions, with no GPU, no checkpoint and no mammograms:
+
+```bash
+git clone https://github.com/3xiaoshayu/LSA-SSViT.git
+cd LSA-SSViT
+pip install numpy pandas scikit-learn
+python scripts/paper_tables.py    # writes results/summary.json and results/paper_tables.md
+```
+
+The whole-model comparison (`python comparators/summarize.py`) additionally imports PyTorch; a CPU build is enough.
 
 ## Requirements
 
@@ -127,14 +148,30 @@ Put a checkpoint at the path above and use the evaluation command. The same file
 
 Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level. The intervals are 95% confidence intervals from 2,000 bootstrap replicates over exams. Reproduce this table with the first command in [Evaluation](#evaluation).
 
+<p align="center">
+  <img src="assets/ablation_forest_plot.png" alt="Paired image-level AUC differences of +GRAIN, +CUSP and LSA-SSViT relative to the Baseline, with 95% confidence intervals" width="760">
+</p>
+
+| Model | GRAIN | CUSP | Screening AUC | Screening AP | Mass AUC | Mass AP | Calcification AUC | Calcification AP |
+| --- | :---: | :---: | ---: | ---: | ---: | ---: | ---: | ---: |
+| Baseline | | | 0.8123 | 0.526 | 0.8215 | 0.291 | 0.9176 | 0.686 |
+| +GRAIN | ✓ | | 0.8331 | **0.552** | 0.8442 | 0.448 | 0.9272 | 0.705 |
+| +CUSP | | ✓ | 0.8286 | 0.542 | 0.8332 | 0.347 | 0.9163 | 0.642 |
+| **LSA-SSViT** | ✓ | ✓ | **0.8348** | 0.548 | **0.8496** | **0.464** | **0.9371** | **0.723** |
+
+Bold marks the best value in each column.
+
+<details>
+<summary>Per-task tables with 95% confidence intervals</summary>
+
 **Screening**
 
 | Model | AUC | AP |
 | --- | ---: | ---: |
 | Baseline | 0.8123 (0.7810–0.8442) | 0.526 |
-| +GRAIN | 0.8331 (0.8033–0.8624) | 0.552 |
+| +GRAIN | 0.8331 (0.8033–0.8624) | **0.552** |
 | +CUSP | 0.8286 (0.7987–0.8583) | 0.542 |
-| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | **0.548** |
+| **LSA-SSViT** | **0.8348** (0.8058–0.8632) | 0.548 |
 
 **Mass**
 
@@ -154,9 +191,29 @@ Official VinDr-Mammo test split (1,000 exams, 4,000 images), image level. The in
 | +CUSP | 0.9163 (0.8692–0.9577) | 0.642 |
 | **LSA-SSViT** | **0.9371** (0.8945–0.9726) | **0.723** |
 
+</details>
+
 All tables of the paper, including the paired significance tests, operating points, exam-level results and the external test on INbreast without fine-tuning, are in [`results/paper_tables.md`](results/paper_tables.md). The whole-model comparison is in [`results/comparators/comparison_tables.md`](results/comparators/comparison_tables.md).
 
 ## Method
+
+### Overview
+
+```text
+1024 × 1024 mammogram (1 channel, repeated to 3)
+  │
+  ├─ Patch embedding (16 × 16) + 2-D RoPE ............ 64 × 64 = 4,096 patch tokens
+  ├─ Blocks 1–8 ...................................... frozen
+  ├─ Block 9  → GRAIN ┐
+  ├─ Block 10 → GRAIN │ ............................... fine-tuned blocks,
+  ├─ Block 11 → GRAIN │                                 GRAIN computed in FP32
+  ├─ Block 12 → GRAIN ┘
+  ├─ LayerNorm → mean of patch tokens → dropout → linear head
+  │                                              ├─ screening (BI-RADS 3–5 vs 1–2)
+  │                                              ├─ mass
+  │                                              └─ suspicious calcification
+  └─ Training only: L = L_BCE + 0.3 · L_CU + 0.1 · L_PC   (CUSP; inference unchanged)
+```
 
 ### GRAIN
 
