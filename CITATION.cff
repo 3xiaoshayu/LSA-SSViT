@@ -1,0 +1,33 @@
+cff-version: 1.2.0
+message: "If you use this code or the released results, please cite the paper and this repository."
+title: "Seeing the Grain, Deciding at the Cusp: Lesion-Scale and Clinically Guided Adaptation of a Vision Foundation Model for Multi-task Mammography Screening"
+type: software
+authors:
+  - family-names: Liu
+    given-names: Xiaoke
+  - family-names: Wang
+    given-names: Jin
+  - family-names: Li
+    given-names: Boao
+  - family-names: Wang
+    given-names: Xianfeng
+  - family-names: Peng
+    given-names: Yuzhong
+  - family-names: Liu
+    given-names: Jianming
+  - family-names: Teng
+    given-names: Wenjie
+  - family-names: Han
+    given-names: Xiaoqing
+repository-code: "https://github.com/3xiaoshayu/LSA-SSViT"
+url: "https://github.com/3xiaoshayu/LSA-SSViT"
+license: MIT
+keywords:
+  - mammography
+  - breast-cancer
+  - vision-transformer
+  - dinov3
+  - adapter
+  - class-activation-map
+  - explainability
+  - bi-rads
