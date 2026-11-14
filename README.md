@@ -262,7 +262,7 @@ All tables of the paper, including validation-selected operating points and exam
 **Gated Residual Aggregation of Inter-token Neighborhoods** follows each of the last four transformer blocks (blocks 9–12). It reshapes the $N = 4{,}096$ patch tokens onto their $64 \times 64$ spatial grid, aggregates every token's $7 \times 7$ neighbourhood ($112 \times 112\text{ px}$ on the input) with a depthwise convolution $\text{DW}$, mixes channels with a $1 \times 1$ pointwise convolution $\text{PW}$, and adds the result back through a zero-initialised bounded gate:
 
 $$
-X' = X + \alpha \tanh(g)\,\tanh\big(\text{PW}(\text{DW}(X))\big), \qquad \alpha = 0.1,\quad g_0 = 0
+X' = X + \alpha \tanh(g)\tanh\big(\text{PW}(\text{DW}(X))\big), \qquad \alpha = 0.1,\quad g_0 = 0
 $$
 
 With $g_0 = 0$, each module is an exact identity mapping at initialization, leaving the pretrained backbone unaltered at step 0 while bounding the magnitude of any local correction to $|X' - X| < 0.1$. Prefix tokens (class and 4 register tokens) bypass GRAIN. Across the four modules, GRAIN adds $4 \times (49 C + C^2 + 1) = 2{,}509{,}828$ parameters (+2.93%).
@@ -275,13 +275,13 @@ $$
 \mathcal{L} = \mathcal{L}_{\text{BCE}} + \lambda_1 \mathcal{L}_{\text{CU}} + \lambda_2 \mathcal{L}_{\text{PC}}, \qquad \lambda_1 = 0.3,\quad \lambda_2 = 0.1
 $$
 
-- **Clinically guided uncertainty weighting ($\mathcal{L}_{\text{CU}}$):** weights the mean class-balanced BCE of each image $i$ by the product of a clinical BI-RADS prior $\pi(b_i)$ — with $\pi(b) = (1.0,\, 1.2,\, \mathbf{2.0},\, 1.4,\, 1.2)$ for BI-RADS $b \in \{1, 2, 3, 4, 5\}$, peaking at the BI-RADS 3 recall boundary — and the detached predictive ambiguity $\bar{a}_i = \frac{1}{3}\sum_{k=1}^{3}\big(1 - |2\,\text{sg}(p_{ik}) - 1|\big)$:
+- **Clinically guided uncertainty weighting ($\mathcal{L}_{\text{CU}}$):** weights the mean class-balanced BCE of each image $i$ by the product of a clinical BI-RADS prior $\pi(b_i)$ — with $\pi(b) = (1.0, 1.2, \mathbf{2.0}, 1.4, 1.2)$ for BI-RADS $b \in \lbrace 1, 2, 3, 4, 5 \rbrace$, peaking at the BI-RADS 3 recall boundary — and the detached predictive ambiguity $a_{ik} = 1 - |2\operatorname{sg}(p_{ik}) - 1|$:
 
 $$
-\mathcal{L}_{\text{CU}} = \frac{1}{B}\sum_{i=1}^{B} \pi(b_i)\,\bar{a}_i\,\overline{\text{BCE}}_i
+\mathcal{L}_{\text{CU}} = \frac{1}{B}\sum_{i=1}^{B} \pi(b_i)\bar{a}_i\overline{\text{BCE}}_i, \qquad \bar{a}_i = \frac{1}{3}\sum_{k=1}^{3} a_{ik}
 $$
 
-- **Label-profile consistency ($\mathcal{L}_{\text{PC}}$):** a soft-margin triplet loss ($\delta = 0.2$) on the $\ell_2$-normalised pooled features $e_i = f_i / \lVert f_i \rVert_2$ that pulls each anchor towards the nearest in-batch image sharing the same 3-label profile $c_i \in \{0,1\}^3$ and pushes it away from the nearest image with a different profile:
+- **Label-profile consistency ($\mathcal{L}_{\text{PC}}$):** a soft-margin triplet loss ($\delta = 0.2$) on the $\ell_2$-normalised pooled features $e_i = f_i / \lVert f_i \rVert_2$ that pulls each anchor towards the nearest in-batch image sharing the same 3-label profile $c_i \in \lbrace 0, 1 \rbrace^3$ and pushes it away from the nearest image with a different profile:
 
 $$
 \mathcal{L}_{\text{PC}} = \frac{1}{|\mathcal{A}|}\sum_{i \in \mathcal{A}} \text{softplus}\left(d_i^+ - d_i^- + \delta\right)
