@@ -115,7 +115,7 @@ The two figures of heat maps also need the images and the maps (see [Heat maps](
 
 ### Evaluate a checkpoint
 
-Thresholds are selected on the validation split with Youden's index and applied unchanged to the test split. Run the following for each model:
+Download the weights from [Pre-trained models](#pre-trained-models) to `checkpoints/<model>/best.pt`. Thresholds are selected on the validation split with Youden's index and applied unchanged to the test split. Run the following for each model:
 
 ```bash
 python evaluate.py --checkpoint checkpoints/LSA-SSViT/best.pt --cache-root outputs/cache/vindr_1024 \
@@ -133,7 +133,7 @@ python scripts/evaluate_inbreast.py --image-root /path/to/AllDICOMs --output-roo
 
 The predictions released with the paper are already in `results/inbreast/`, and `python scripts/paper_tables.py` reads those. The command above writes a new run to `outputs/inbreast/` and does not replace them.
 
-The VinDr-trained checkpoints are applied without fine-tuning or recalibration. The screening label follows the same BI-RADS rule (first digit ≥ 3, including 4a–4c and 6); the INbreast mass and microcalcification annotations include benign findings. Confidence intervals resample patients.
+By default, `evaluate_inbreast.py` reads the four checkpoints from `checkpoints/<model>/best.pt` (`--checkpoint-root checkpoints`). The VinDr-trained checkpoints are applied without fine-tuning or recalibration. The screening label follows the same BI-RADS rule (first digit ≥ 3, including 4a–4c and 6); the INbreast mass and microcalcification annotations include benign findings. Confidence intervals resample patients.
 
 ## Pre-trained models
 
@@ -146,7 +146,7 @@ The four trained checkpoints from the paper are available in the shared Google D
 | +CUSP | `checkpoints/cusp/best.pt` | 326.8 MiB | [`cusp_best.pt`](https://drive.google.com/file/d/1-PfX53MDl2N_yvKXBPNK_gp_QIcVj2P_/view?usp=sharing) | `6db07d8d` |
 | **LSA-SSViT** | `checkpoints/LSA-SSViT/best.pt` | 336.4 MiB | [`LSA-SSViT_best.pt`](https://drive.google.com/file/d/1ZpBXadif42tY1HWd1vIfB0DaY-1rc_lt/view?usp=sharing) | `bb703f63` |
 
-Place each downloaded file as `best.pt` at its local path above and verify its checksum against [`SHA256SUMS.txt`](SHA256SUMS.txt). Each file stores both the trained weights and the backbone configuration, so evaluation needs no download from Hugging Face.
+On Google Drive each file carries its model prefix so all four live in one folder; rename each downloaded file to `best.pt` at its local path above (`scripts/evaluate_inbreast.py`, `scripts/heatmaps.py`, and [`SHA256SUMS.txt`](SHA256SUMS.txt) read `checkpoints/<model>/best.pt` by default, while `evaluate.py` and `scripts/model_complexity.py` take any path via `--checkpoint`). Verify checksums against [`SHA256SUMS.txt`](SHA256SUMS.txt). Each file stores FP32 model weights only (no optimizer state; 85.66 M parameters for Baseline / +CUSP and 88.17 M with GRAIN), along with the backbone and preprocessing configuration, and loads via `weights_only=True` without downloading from Hugging Face.
 
 <details>
 <summary>Download via CLI with gdown</summary>
@@ -161,6 +161,7 @@ gdown 1WLZ8zGFbcfpIx40nqETqI0kbfvrZmIL9 -O checkpoints/grain/best.pt
 gdown 1-PfX53MDl2N_yvKXBPNK_gp_QIcVj2P_ -O checkpoints/cusp/best.pt
 gdown 1ZpBXadif42tY1HWd1vIfB0DaY-1rc_lt -O checkpoints/LSA-SSViT/best.pt
 
+# Verify all four checkpoints (or grep LSA-SSViT for a single model)
 grep checkpoints/ SHA256SUMS.txt | sha256sum -c -
 ```
 
