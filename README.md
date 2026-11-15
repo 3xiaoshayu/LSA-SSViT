@@ -17,7 +17,7 @@ This repository is the official implementation of **Seeing the Grain, Deciding a
 LSA-SSViT adapts a DINOv3 ViT-B/16 backbone at 1024 × 1024 with [GRAIN](#grain) and [CUSP](#cusp). From one image it predicts a BI-RADS screening decision (BI-RADS 3–5 vs 1–2), whether a mass is present, and whether suspicious calcifications are present.
 
 > [!NOTE]
-> This repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables and plots. It does not contain mammograms or trained weights.
+> This repository contains the training and evaluation code, the exam-level split, and the predictions behind the tables and plots. Pre-trained checkpoints are available on [Google Drive](#pre-trained-models); no mammogram images are included.
 
 <p align="center">
   <a href="#quick-start">Quick Start</a> &nbsp;·&nbsp;
@@ -137,17 +137,37 @@ The VinDr-trained checkpoints are applied without fine-tuning or recalibration. 
 
 ## Pre-trained models
 
-| Model | Checkpoint |
-| --- | --- |
-| Baseline | `checkpoints/baseline/best.pt` |
-| +GRAIN | `checkpoints/grain/best.pt` |
-| +CUSP | `checkpoints/cusp/best.pt` |
-| **LSA-SSViT** | `checkpoints/LSA-SSViT/best.pt` |
+The four trained checkpoints from the paper are available in the shared Google Drive folder [`LSA-SSViT-checkpoints`](https://drive.google.com/drive/folders/1OQNJXwMuR2FxY5KVvWTZg9M3YVGO0rZT):
+
+| Model | Local path | Size | Download | SHA256 (prefix) |
+| --- | --- | ---: | --- | --- |
+| Baseline | `checkpoints/baseline/best.pt` | 326.8 MiB | [`baseline_best.pt`](https://drive.google.com/file/d/1426LrhPN1dErfIk_3fIxm3hNR5sFrJkw/view?usp=sharing) | `b4f0703e` |
+| +GRAIN | `checkpoints/grain/best.pt` | 336.4 MiB | [`grain_best.pt`](https://drive.google.com/file/d/1WLZ8zGFbcfpIx40nqETqI0kbfvrZmIL9/view?usp=sharing) | `16000a3d` |
+| +CUSP | `checkpoints/cusp/best.pt` | 326.8 MiB | [`cusp_best.pt`](https://drive.google.com/file/d/1-PfX53MDl2N_yvKXBPNK_gp_QIcVj2P_/view?usp=sharing) | `6db07d8d` |
+| **LSA-SSViT** | `checkpoints/LSA-SSViT/best.pt` | 336.4 MiB | [`LSA-SSViT_best.pt`](https://drive.google.com/file/d/1ZpBXadif42tY1HWd1vIfB0DaY-1rc_lt/view?usp=sharing) | `bb703f63` |
+
+Place each downloaded file as `best.pt` at its local path above and verify its checksum against [`SHA256SUMS.txt`](SHA256SUMS.txt). Each file stores both the trained weights and the backbone configuration, so evaluation needs no download from Hugging Face.
+
+<details>
+<summary>Download via CLI with gdown</summary>
+
+```bash
+pip install -U gdown
+mkdir -p checkpoints/baseline checkpoints/grain
+mkdir -p checkpoints/cusp checkpoints/LSA-SSViT
+
+gdown 1426LrhPN1dErfIk_3fIxm3hNR5sFrJkw -O checkpoints/baseline/best.pt
+gdown 1WLZ8zGFbcfpIx40nqETqI0kbfvrZmIL9 -O checkpoints/grain/best.pt
+gdown 1-PfX53MDl2N_yvKXBPNK_gp_QIcVj2P_ -O checkpoints/cusp/best.pt
+gdown 1ZpBXadif42tY1HWd1vIfB0DaY-1rc_lt -O checkpoints/LSA-SSViT/best.pt
+
+grep checkpoints/ SHA256SUMS.txt | sha256sum -c -
+```
+
+</details>
 
 > [!IMPORTANT]
-> These four files are not in the git repository. Each one is larger than GitHub's 100 MB file limit, and each one contains the DINOv3 backbone, which is not redistributed (see [License](#license)). `SHA256SUMS.txt` records their checksums.
-
-Put a checkpoint at the path above and use the evaluation command. The same file also stores the backbone configuration, so evaluation does not download DINOv3 again.
+> Because each file exceeds GitHub's 100 MB limit, checkpoints are hosted on [Google Drive](https://drive.google.com/drive/folders/1OQNJXwMuR2FxY5KVvWTZg9M3YVGO0rZT) alongside [`DINOv3_LICENSE.md`](https://drive.google.com/file/d/1L5S0Ckg-74ak4hK_QjrfgNUEn6_DIzuY/view?usp=sharing) and [`README_WEIGHTS.txt`](https://drive.google.com/file/d/1hdJhzSa4CvRab7SHtrRBnN7o5f_mcy-6/view?usp=sharing). All four checkpoints contain weights derived from DINOv3 and are distributed for research use under the [DINOv3 License](https://ai.meta.com/resources/models-and-libraries/dinov3-license/) (see [License](#license)).
 
 ## Results
 
@@ -330,7 +350,7 @@ The four models (Baseline, +GRAIN, +CUSP and LSA-SSViT) are called `baseline`, `
 | Path | Contents |
 | --- | --- |
 | `splits/vindr/` | exam-level split of VinDr-Mammo used in the paper |
-| `checkpoints/<model>/` | trained weights (`best.pt`; not tracked by git) |
+| `checkpoints/<model>/` | target directory for downloaded weights (`best.pt`; hosted on [Google Drive](#pre-trained-models)) |
 | `results/vindr/<model>/` | per-image test predictions and metrics |
 | `results/inbreast/<model>/` | per-image predictions on INbreast, no fine-tuning |
 | `results/heatmaps/` | lesion masks and heat-map results |
@@ -499,7 +519,7 @@ If you use this code or the released results, please cite the paper and this rep
 
 ## License
 
-The code is released under the MIT License (see `LICENSE`). The DINOv3 weights, which are not included here, are subject to the [DINOv3 License](https://ai.meta.com/resources/models-and-libraries/dinov3-license/). VinDr-Mammo and INbreast are subject to their own data use agreements. This repository contains no mammogram images. The only image-derived file is the rasterized VinDr-Mammo lesion annotations of the test split, in `results/heatmaps/lesion_masks_test.npz`.
+The code is released under the MIT License (see `LICENSE`). The pre-trained checkpoints hosted on [Google Drive](https://drive.google.com/drive/folders/1OQNJXwMuR2FxY5KVvWTZg9M3YVGO0rZT) contain weights derived from [`facebook/dinov3-vitb16-pretrain-lvd1689m`](https://huggingface.co/facebook/dinov3-vitb16-pretrain-lvd1689m) and are distributed under the [DINOv3 License](https://ai.meta.com/resources/models-and-libraries/dinov3-license/) (a copy is included as [`DINOv3_LICENSE.md`](https://drive.google.com/file/d/1L5S0Ckg-74ak4hK_QjrfgNUEn6_DIzuY/view?usp=sharing)); they are intended for research purposes only. VinDr-Mammo and INbreast are subject to their own data use agreements. This repository contains no mammogram images; the only image-derived file is the rasterized VinDr-Mammo lesion annotations of the test split, in `results/heatmaps/lesion_masks_test.npz`.
 
 ## Acknowledgements
 
